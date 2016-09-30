@@ -98,7 +98,7 @@
 					if (t.fullscreenMode === 'plugin-hover') {
 						if (hideTimeout !== null) {
 							clearTimeout(hideTimeout);
-							delete hideTimeout;
+							hideTimeout = null;
 						}
 
 						const buttonPos = fullscreenBtn.offset();
@@ -113,7 +113,6 @@
 					if (t.fullscreenMode === 'plugin-hover') {
 						if (hideTimeout !== null) {
 							clearTimeout(hideTimeout);
-							//delete hideTimeout;
 						}
 
 						hideTimeout = setTimeout(() => {
@@ -242,10 +241,7 @@
 			let i;
 			let len;
 
-			const /**
-			 * @private
-			 */
-			positionHoverDivs = () => {
+			const positionHoverDivs = () => {
 				const fullScreenBtnOffsetLeft = fullscreenBtn.offset().left - t.container.offset().left;
 				const fullScreenBtnOffsetTop = fullscreenBtn.offset().top - t.container.offset().top;
 				const fullScreenBtnWidth = fullscreenBtn.outerWidth(true);
@@ -259,29 +255,29 @@
 
 				// over video, but not controls
 				hoverDivs['top']
-					.width(containerWidth)
-					.height(fullScreenBtnOffsetTop);
+				.width(containerWidth)
+				.height(fullScreenBtnOffsetTop);
 
 				// over controls, but not the fullscreen button
 				hoverDivs['left']
-					.width(fullScreenBtnOffsetLeft)
-					.height(fullScreenBtnHeight)
-					.css({top: fullScreenBtnOffsetTop});
+				.width(fullScreenBtnOffsetLeft)
+				.height(fullScreenBtnHeight)
+				.css({top: fullScreenBtnOffsetTop});
 
 				// after the fullscreen button
 				hoverDivs['right']
-					.width(containerWidth - fullScreenBtnOffsetLeft - fullScreenBtnWidth)
-					.height(fullScreenBtnHeight)
-					.css({
-						top: fullScreenBtnOffsetTop,
-						left: fullScreenBtnOffsetLeft + fullScreenBtnWidth
-					});
+				.width(containerWidth - fullScreenBtnOffsetLeft - fullScreenBtnWidth)
+				.height(fullScreenBtnHeight)
+				.css({
+					top: fullScreenBtnOffsetTop,
+					left: fullScreenBtnOffsetLeft + fullScreenBtnWidth
+				});
 
 				// under the fullscreen button
 				hoverDivs['bottom']
-					.width(containerWidth)
-					.height(containerHeight - fullScreenBtnHeight - fullScreenBtnOffsetTop)
-					.css({top: fullScreenBtnOffsetTop + fullScreenBtnHeight});
+				.width(containerWidth)
+				.height(containerHeight - fullScreenBtnHeight - fullScreenBtnOffsetTop)
+				.css({top: fullScreenBtnOffsetTop + fullScreenBtnHeight});
 			};
 
 			t.globalBind('resize', () => {
@@ -431,9 +427,9 @@
 
 			// make full size
 			t.container
-				.addClass('mejs-container-fullscreen')
-				.width('100%')
-				.height('100%');
+			.addClass('mejs-container-fullscreen')
+			.width('100%')
+			.height('100%');
 
 			// Only needed for safari 5.1 native full screen, can cause display issues elsewhere
 			// Actually, it seems to be needed for IE8, too
@@ -446,30 +442,30 @@
 
 			if (isNative) {
 				t.$media
-					.width('100%')
-					.height('100%');
+				.width('100%')
+				.height('100%');
 			} else {
 				t.container.find('.mejs-shim')
-					.width('100%')
-					.height('100%');
+				.width('100%')
+				.height('100%');
 
 				setTimeout(() => {
 					const win = $(window);
 					const winW = win.width();
 					const winH = win.height();
 
-					t.media.setVideoSize(winW, winH);
+					t.media.setSize(winW, winH);
 				}, 500);
 			}
 
 			t.layers.children('div')
-				.width('100%')
-				.height('100%');
+			.width('100%')
+			.height('100%');
 
 			if (t.fullscreenBtn) {
 				t.fullscreenBtn
-					.removeClass('mejs-fullscreen')
-					.addClass('mejs-unfullscreen');
+				.removeClass('mejs-fullscreen')
+				.addClass('mejs-unfullscreen');
 			}
 
 			t.setControlsSize();
@@ -500,9 +496,9 @@
 			$(document.documentElement).removeClass('mejs-fullscreen');
 
 			t.container
-				.removeClass('mejs-container-fullscreen')
-				.width(t.normalWidth)
-				.height(t.normalHeight);
+			.removeClass('mejs-container-fullscreen')
+			.width(t.normalWidth)
+			.height(t.normalHeight);
 
 			if (isNative) {
 				t.$media
@@ -510,19 +506,19 @@
 				.height(t.normalHeight);
 			} else {
 				t.container.find('.mejs-shim')
-					.width(t.normalWidth)
-					.height(t.normalHeight);
-
-				t.media.setVideoSize(t.normalWidth, t.normalHeight);
-			}
-
-			t.layers.children('div')
 				.width(t.normalWidth)
 				.height(t.normalHeight);
 
+				t.media.setSize(t.normalWidth, t.normalHeight);
+			}
+
+			t.layers.children('div')
+			.width(t.normalWidth)
+			.height(t.normalHeight);
+
 			t.fullscreenBtn
-				.removeClass('mejs-unfullscreen')
-				.addClass('mejs-fullscreen');
+			.removeClass('mejs-unfullscreen')
+			.addClass('mejs-fullscreen');
 
 			t.setControlsSize();
 			t.isFullScreen = false;

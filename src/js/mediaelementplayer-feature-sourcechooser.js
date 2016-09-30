@@ -37,7 +37,7 @@
 				.hover(() => {
 					clearTimeout(hoverTimeout);
 					player.showSourcechooserSelector();
-				}, function () {
+				}, () => {
 					hoverTimeout = setTimeout(() => {
 						player.hideSourcechooserSelector();
 					}, 500);
@@ -84,17 +84,19 @@
 
 				// handle clicks to the source radio buttons
 				.delegate('input[type=radio]', 'click', function () {
+					console.log('click');
 					// set aria states
 					$(this).attr('aria-selected', true).attr('checked', 'checked');
 					$(this).closest('.mejs-sourcechooser-selector').find('input[type=radio]').not(this).attr('aria-selected', 'false').removeAttr('checked');
 
 					const src = this.value;
 
-					if (media.currentSrc != src) {
+					if (media.currentSrc !== src) {
 						const currentTime = media.currentTime;
 						const paused = media.paused;
 						media.pause();
 						media.setSrc(src);
+						media.load();
 
 						media.addEventListener('loadedmetadata', e => {
 							media.currentTime = currentTime;
@@ -124,7 +126,7 @@
 			// add to list
 			for (const i in this.node.children) {
 				const src = this.node.children[i];
-				if (src.nodeName === 'SOURCE' && (media.canPlayType(src.type) === 'probably' || media.canPlayType(src.type) === 'maybe')) {
+				if (typeof src.type !== 'undefined' && src.nodeName === 'SOURCE' && media.canPlayType !== null) {
 					player.addSourceButton(src.src, src.title, src.type, media.src === src.src);
 				}
 			}
@@ -167,35 +169,38 @@
 		 *
 		 */
 		hideSourcechooserSelector() {
+
 			const t = this;
 
 			if (typeof t.sourcechooserButton === 'undefined' || !t.sourcechooserButton.find('.mejs-sourcechooser-selector').find('input[type=radio]').length) {
 				return;
 			}
-			t.sourcechooserButton.find('.mejs-sourcechooser-selector')
-				.addClass('mejs-offscreen')
-				.attr('aria-expanded', 'false')
-				.attr('aria-hidden', 'true')
-				.find('input[type=radio]') // make radios not focusable
-				.attr('tabindex', '-1');
+
+			this.sourcechooserButton.find('.mejs-sourcechooser-selector')
+			.addClass('mejs-offscreen')
+			.attr('aria-expanded', 'false')
+			.attr('aria-hidden', 'true')
+			.find('input[type=radio]') // make radios not focusable
+			.attr('tabindex', '-1');
 		},
 
 		/**
 		 *
 		 */
 		showSourcechooserSelector() {
+
 			const t = this;
 
 			if (typeof t.sourcechooserButton === 'undefined' || !t.sourcechooserButton.find('.mejs-sourcechooser-selector').find('input[type=radio]').length) {
 				return;
 			}
 
-			t.sourcechooserButton.find('.mejs-sourcechooser-selector')
-				.removeClass('mejs-offscreen')
-				.attr('aria-expanded', 'true')
-				.attr('aria-hidden', 'false')
-				.find('input[type=radio]')
-				.attr('tabindex', '0');
+			this.sourcechooserButton.find('.mejs-sourcechooser-selector')
+			.removeClass('mejs-offscreen')
+			.attr('aria-expanded', 'true')
+			.attr('aria-hidden', 'false')
+			.find('input[type=radio]')
+			.attr('tabindex', '0');
 		}
 	});
 
