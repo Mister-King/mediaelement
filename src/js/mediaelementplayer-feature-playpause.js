@@ -4,7 +4,7 @@
  * This feature enables the displaying of a Play button in the control bar, and also contains logic to toggle its state
  * between paused and playing.
  */
-(function($) {
+(($ => {
 
 	// Feature configuration
 	$.extend(mejs.MepDefaults, {
@@ -29,29 +29,28 @@
 		 * @param {HTMLElement} media
 		 * @public
 		 */
-		buildplaypause: function(player, controls, layers, media) {
-			var 
-				t = this,
-				op = t.options,
-				playTitle = op.playText ? op.playText : mejs.i18n.t('mejs.play'),
-				pauseTitle = op.pauseText ? op.pauseText : mejs.i18n.t('mejs.pause'),
-				play =
-				$('<div class="mejs-button mejs-playpause-button mejs-play" >' +
-					'<button type="button" aria-controls="' + t.id + '" title="' + playTitle + '" aria-label="' + pauseTitle + '"></button>' +
-				'</div>')
+		buildplaypause(player, controls, layers, media) {
+			const t = this;
+			const op = t.options;
+			const playTitle = op.playText ? op.playText : mejs.i18n.t('mejs.play');
+			const pauseTitle = op.pauseText ? op.pauseText : mejs.i18n.t('mejs.pause');
+
+			const play =
+				$(`<div class="mejs-button mejs-playpause-button mejs-play" ><button type="button" aria-controls="${t.id}" title="${playTitle}" aria-label="${pauseTitle}"></button></div>`)
 				.appendTo(controls)
-				.click(function(e) {
+				.click(e => {
 					e.preventDefault();
-				
+
 					if (media.paused) {
 						media.play();
 					} else {
 						media.pause();
 					}
-					
+
 					return false;
-				}),
-				play_btn = play.find('button');
+				});
+
+			const play_btn = play.find('button');
 
 
 			/**
@@ -76,21 +75,21 @@
 
 			togglePlayPause('pse');
 
-			media.addEventListener('play',function() {
+			media.addEventListener('play', () => {
 				togglePlayPause('play');
 			}, false);
-			media.addEventListener('playing',function() {
+			media.addEventListener('playing', () => {
 				togglePlayPause('play');
 			}, false);
 
 
-			media.addEventListener('pause',function() {
+			media.addEventListener('pause', () => {
 				togglePlayPause('pse');
 			}, false);
-			media.addEventListener('paused',function() {
+			media.addEventListener('paused', () => {
 				togglePlayPause('pse');
 			}, false);
 		}
 	});
-	
-})(mejs.$);
+
+}))(mejs.$);

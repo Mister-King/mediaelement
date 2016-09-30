@@ -12,10 +12,7 @@
  * @params
  *  - exports - CommonJS, window ..
  */
-;(function(exports, undefined) {
-
-    "use strict";
-
+;(((exports, undefined) => {
     if (typeof exports.en === 'undefined') {
         exports.en = {
             // me-shim
@@ -63,7 +60,7 @@
             // mep-player
             'mejs.video-player': 'Video Player',
             'mejs.audio-player': 'Audio Player',
-            	
+
             // mep-feature-ads
             'mejs.ad-skip': 'Skip ad',
             'mejs.ad-skip-info': 'Skip in %1 seconds',
@@ -128,5 +125,4 @@
             'mejs.yiddish': 'Yiddish'
         };
     }
-
-}(mejs.i18n.locale.strings));
+})(mejs.i18n.locale.strings));

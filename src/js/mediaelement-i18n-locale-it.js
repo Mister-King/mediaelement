@@ -12,10 +12,7 @@
  * @params
  *  - exports - CommonJS, window ..
  */
-;(function(exports, undefined) {
-
-    "use strict";
-
+;(((exports, undefined) => {
     if (typeof exports.it === 'undefined') {
         exports.it = {
 
@@ -42,5 +39,4 @@
 
         };
     }
-
-}(mejs.i18n.locale.strings));
+})(mejs.i18n.locale.strings));

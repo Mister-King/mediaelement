@@ -3,7 +3,7 @@
  *
  * This feature creates a progress bar with a slider in the control bar, and updates it based on native events.
  */
-(function($) {
+(($ => {
 
 	// Feature configuration
 	$.extend(mejs.MepDefaults, {
@@ -29,40 +29,30 @@
 		 * @param {$} layers
 		 * @param {HTMLElement} media
 		 */
-		buildprogress: function(player, controls, layers, media) {
+		buildprogress(player, controls, layers, media) {
+			const t = this;
+			let mouseIsDown = false;
+			let mouseIsOver = false;
+			let lastKeyPressTime = 0;
+			let startedPaused = false;
+			const autoRewindInitial = player.options.autoRewind;
+			const progressTitle = t.options.progressHelpText ? t.options.progressHelpText : mejs.i18n.t('mejs.time-help-text');
 
-			var
-				t = this,
-				mouseIsDown = false,
-				mouseIsOver = false,
-				lastKeyPressTime = 0,
-				startedPaused = false,
-				autoRewindInitial = player.options.autoRewind,
-				progressTitle = t.options.progressHelpText ? t.options.progressHelpText : mejs.i18n.t('mejs.time-help-text'),
-				tooltip = player.options.enableProgressTooltip ? '<span class="mejs-time-float">' +
-					'<span class="mejs-time-float-current">00:00</span>' +
-					'<span class="mejs-time-float-corner"></span>' +
-				'</span>' : "";
+			const tooltip = player.options.enableProgressTooltip ? '<span class="mejs-time-float">' +
+			'<span class="mejs-time-float-current">00:00</span>' +
+			'<span class="mejs-time-float-corner"></span>' +
+			'</span>' : "";
 
-			$('<div class="mejs-time-rail">' +
-				'<span  class="mejs-time-total mejs-time-slider">' +
-				//'<span class="mejs-offscreen">' + progressTitle + '</span>' +
-					'<span class="mejs-time-buffering"></span>' +
-					'<span class="mejs-time-loaded"></span>' +
-					'<span class="mejs-time-current"></span>' +
-					'<span class="mejs-time-handle"></span>' +
-					 tooltip +
-				'</span>' +
-			'</div>')
-				.appendTo(controls);
+			$(`<div class="mejs-time-rail"><span  class="mejs-time-total mejs-time-slider"><span class="mejs-time-buffering"></span><span class="mejs-time-loaded"></span><span class="mejs-time-current"></span><span class="mejs-time-handle"></span>${tooltip}</span></div>`)
+			.appendTo(controls);
 			controls.find('.mejs-time-buffering').hide();
 
 			t.total = controls.find('.mejs-time-total');
-			t.loaded  = controls.find('.mejs-time-loaded');
-			t.current  = controls.find('.mejs-time-current');
-			t.handle  = controls.find('.mejs-time-handle');
-			t.timefloat  = controls.find('.mejs-time-float');
-			t.timefloatcurrent  = controls.find('.mejs-time-float-current');
+			t.loaded = controls.find('.mejs-time-loaded');
+			t.current = controls.find('.mejs-time-current');
+			t.handle = controls.find('.mejs-time-handle');
+			t.timefloat = controls.find('.mejs-time-float');
+			t.timefloatcurrent = controls.find('.mejs-time-float-current');
 			t.slider = controls.find('.mejs-time-slider');
 
 			/**
@@ -70,101 +60,98 @@
 			 * @private
 			 * @param {Event} e
 			 */
-			var handleMouseMove = function (e) {
+			const handleMouseMove = e => {
+				const offset = t.total.offset();
+				const width = t.total.width();
+				let percentage = 0;
+				let newTime = 0;
+				let pos = 0;
+				let x;
 
-					var offset = t.total.offset(),
-						width = t.total.width(),
-						percentage = 0,
-						newTime = 0,
-						pos = 0,
-						x;
+				// mouse or touch position relative to the object
+				if (e.originalEvent && e.originalEvent.changedTouches) {
+					x = e.originalEvent.changedTouches[0].pageX;
+				} else if (e.changedTouches) { // for Zepto
+					x = e.changedTouches[0].pageX;
+				} else {
+					x = e.pageX;
+				}
 
-					// mouse or touch position relative to the object
-					if (e.originalEvent && e.originalEvent.changedTouches) {
-						x = e.originalEvent.changedTouches[0].pageX;
-					} else if (e.changedTouches) { // for Zepto
-						x = e.changedTouches[0].pageX;
-					} else {
-						x = e.pageX;
+				if (media.duration) {
+					if (x < offset.left) {
+						x = offset.left;
+					} else if (x > width + offset.left) {
+						x = width + offset.left;
 					}
 
-					if (media.duration) {
-						if (x < offset.left) {
-							x = offset.left;
-						} else if (x > width + offset.left) {
-							x = width + offset.left;
-						}
+					pos = x - offset.left;
+					percentage = (pos / width);
+					newTime = (percentage <= 0.02) ? 0 : percentage * media.duration;
 
-						pos = x - offset.left;
-						percentage = (pos / width);
-						newTime = (percentage <= 0.02) ? 0 : percentage * media.duration;
-
-						// seek to where the mouse is
-						if (mouseIsDown && newTime !== media.currentTime) {
-							media.setCurrentTime(newTime);
-						}
-
-						// position floating time box
-						if (!mejs.MediaFeatures.hasTouch) {
-							t.timefloat.css('left', pos);
-							t.timefloatcurrent.html( mejs.Utility.secondsToTimeCode(newTime, player.options.alwaysShowHours));
-							t.timefloat.show();
-						}
+					// seek to where the mouse is
+					if (mouseIsDown && newTime !== media.currentTime) {
+						media.setCurrentTime(newTime);
 					}
-				},
-				/**
-				 * Update elements in progress bar for accessibility purposes
-				 * @private
-				 */
-				updateSlider = function () {
 
-					var seconds = media.currentTime,
-						timeSliderText = mejs.i18n.t('mejs.time-slider'),
-						time = mejs.Utility.secondsToTimeCode(seconds, player.options.alwaysShowHours),
-						duration = media.duration;
-
-					t.slider.attr({
-						'aria-label': timeSliderText,
-						'aria-valuemin': 0,
-						'aria-valuemax': duration,
-						'aria-valuenow': seconds,
-						'aria-valuetext': time,
-						'role': 'slider',
-						'tabindex': 0
-					});
-
-				},
-				/**
-				 *
-				 * @private
-				 */
-				restartPlayer = function () {
-					var now = new Date();
-					if (now - lastKeyPressTime >= 1000) {
-						media.play();
+					// position floating time box
+					if (!mejs.MediaFeatures.hasTouch) {
+						t.timefloat.css('left', pos);
+						t.timefloatcurrent.html(mejs.Utility.secondsToTimeCode(newTime, player.options.alwaysShowHours));
+						t.timefloat.show();
 					}
-				};
+				}
+			};
+
+			const /**
+			 * Update elements in progress bar for accessibility purposes
+			 * @private
+			 */
+			updateSlider = () => {
+
+				const seconds = media.currentTime, timeSliderText = mejs.i18n.t('mejs.time-slider'), time = mejs.Utility.secondsToTimeCode(seconds, player.options.alwaysShowHours), duration = media.duration;
+
+				t.slider.attr({
+					'aria-label': timeSliderText,
+					'aria-valuemin': 0,
+					'aria-valuemax': duration,
+					'aria-valuenow': seconds,
+					'aria-valuetext': time,
+					'role': 'slider',
+					'tabindex': 0
+				});
+
+			};
+
+			const /**
+			 *
+			 * @private
+			 */
+			restartPlayer = () => {
+				const now = new Date();
+				if (now - lastKeyPressTime >= 1000) {
+					media.play();
+				}
+			};
 
 			// Events
-			t.slider.bind('focus', function (e) {
+			t.slider.bind('focus', e => {
 				player.options.autoRewind = false;
 			});
 
-			t.slider.bind('blur', function (e) {
+			t.slider.bind('blur', e => {
 				player.options.autoRewind = autoRewindInitial;
 			});
 
-			t.slider.bind('keydown', function (e) {
-
+			t.slider.bind('keydown', e => {
 				if ((new Date() - lastKeyPressTime) >= 1000) {
 					startedPaused = media.paused;
 				}
 
-				var keyCode = e.keyCode,
-					duration = media.duration,
-					seekTime = media.currentTime,
-					seekForward  = player.options.defaultSeekForwardInterval(media),
-					seekBackward = player.options.defaultSeekBackwardInterval(media);
+				const keyCode = e.keyCode;
+				const duration = media.duration;
+				let seekTime = media.currentTime;
+				const seekForward = player.options.defaultSeekForwardInterval(media);
+				const seekBackward = player.options.defaultSeekBackwardInterval(media);
 
 				switch (keyCode) {
 					case 37: // left
@@ -213,56 +200,56 @@
 
 			// handle clicks
 			t.total
-				.bind('mousedown touchstart', function (e) {
-					// only handle left clicks or touch
-					if (e.which === 1 || e.which === 0) {
-						mouseIsDown = true;
-						handleMouseMove(e);
-						t.globalBind('mousemove.dur touchmove.dur', function(e) {
-							handleMouseMove(e);
-						});
-						t.globalBind('mouseup.dur touchend.dur', function (e) {
-							mouseIsDown = false;
-							if (typeof t.timefloat !== 'undefined') {
-								t.timefloat.hide();
-							}
-							t.globalUnbind('.dur');
-						});
-					}
-				})
-				.bind('mouseenter', function(e) {
-					mouseIsOver = true;
-					t.globalBind('mousemove.dur', function(e) {
+			.bind('mousedown touchstart', e => {
+				// only handle left clicks or touch
+				if (e.which === 1 || e.which === 0) {
+					mouseIsDown = true;
+					handleMouseMove(e);
+					t.globalBind('mousemove.dur touchmove.dur', e => {
 						handleMouseMove(e);
 					});
-					if (typeof t.timefloat !== 'undefined' && !mejs.MediaFeatures.hasTouch) {
-						t.timefloat.show();
-					}
-				})
-				.bind('mouseleave',function(e) {
-					mouseIsOver = false;
-					if (!mouseIsDown) {
-						t.globalUnbind('.dur');
+					t.globalBind('mouseup.dur touchend.dur', e => {
+						mouseIsDown = false;
 						if (typeof t.timefloat !== 'undefined') {
 							t.timefloat.hide();
 						}
-					}
+						t.globalUnbind('.dur');
+					});
+				}
+			})
+			.bind('mouseenter', e => {
+				mouseIsOver = true;
+				t.globalBind('mousemove.dur', e => {
+					handleMouseMove(e);
 				});
+				if (typeof t.timefloat !== 'undefined' && !mejs.MediaFeatures.hasTouch) {
+					t.timefloat.show();
+				}
+			})
+			.bind('mouseleave', e => {
+				mouseIsOver = false;
+				if (!mouseIsDown) {
+					t.globalUnbind('.dur');
+					if (typeof t.timefloat !== 'undefined') {
+						t.timefloat.hide();
+					}
+				}
+			});
 
 			// loading
-			media.addEventListener('progress', function (e) {
+			media.addEventListener('progress', e => {
 				player.setProgressRail(e);
 				player.setCurrentRail(e);
 			}, false);
 
 			// current time
-			media.addEventListener('timeupdate', function(e) {
+			media.addEventListener('timeupdate', e => {
 				player.setProgressRail(e);
 				player.setCurrentRail(e);
 				updateSlider(e);
 			}, false);
 
-			t.container.on('controlsresize', function(e) {
+			t.container.on('controlsresize', e => {
 				player.setProgressRail(e);
 				player.setCurrentRail(e);
 			});
@@ -273,18 +260,16 @@
 		 *
 		 * @param {Event} e
 		 */
-		setProgressRail: function(e) {
-
-			var
-				t = this,
-				target = (e !== undefined) ? e.target : t.media,
-				percent = null;
+		setProgressRail(e) {
+			const t = this;
+			const target = (e !== undefined) ? e.target : t.media;
+			let percent = null;
 
 			// newest HTML5 spec has buffered array (FF4, Webkit)
 			if (target && target.buffered && target.buffered.length > 0 && target.buffered.end && target.duration) {
 				// account for a real array with multiple values - always read the end of the last buffer
 				percent = target.buffered.end(target.buffered.length - 1) / target.duration;
-			} 
+			}
 			// Some browsers (e.g., FF3.6 and Safari 5) cannot calculate target.bufferered.end()
 			// to be anything other than 0. If the byte count is available we use this instead.
 			// Browsers that support the else if do not seem to have the bufferedBytes value and
@@ -310,17 +295,16 @@
 		 * Update the slider's width depending on the current time
 		 *
 		 */
-		setCurrentRail: function() {
+		setCurrentRail() {
 
-			var t = this;
-		
+			const t = this;
+
 			if (t.media.currentTime !== undefined && t.media.duration) {
 
 				// update bar and handle
 				if (t.total && t.handle) {
-					var 
-						newWidth = Math.round(t.total.width() * t.media.currentTime / t.media.duration),
-						handlePos = newWidth - Math.round(t.handle.outerWidth(true) / 2);
+					const newWidth = Math.round(t.total.width() * t.media.currentTime / t.media.duration);
+					const handlePos = newWidth - Math.round(t.handle.outerWidth(true) / 2);
 
 					t.current.width(newWidth);
 					t.handle.css('left', handlePos);
@@ -329,4 +313,4 @@
 
 		}
 	});
-})(mejs.$);
+}))(mejs.$);

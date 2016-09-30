@@ -14,10 +14,7 @@
  * @params
  *  - exports - CommonJS, window ..
  */
-;(function(exports, undefined) {
-
-    "use strict";
-
+;(((exports, undefined) => {
     if (typeof exports['pt-BR'] === 'undefined') {
         exports.pt = {
             'mejs.none' : "Sem legendas",
@@ -33,5 +30,4 @@
             'mejs.close' : "Fechar"
         };
     }
-
-}(mejs.i18n.locale.strings));
+})(mejs.i18n.locale.strings));

@@ -4,24 +4,24 @@
  * Uses <iframe> approach and uses SoundCloud Widget API to manipulate it.
  * @see https://developers.soundcloud.com/docs/api/html5-widget
  */
-(function(win, doc, mejs, undefined) {
+(((win, doc, mejs, undefined) => {
 
 	/**
 	 * Register SoundCloud type based on URL structure
 	 *
 	 */
-	mejs.Utils.typeChecks.push(function(url) {
+	mejs.Utils.typeChecks.push(url => {
 
 		url = url.toLowerCase();
 
-		if (url.indexOf('soundcloud.com') > -1) {
+		if (url.includes('soundcloud.com')) {
 			return 'video/soundcloud';
 		} else {
 			return null;
 		}
 	});
 
-	var SoundCloudApi = {
+	const SoundCloudApi = {
 		/**
 		 * @type {Boolean}
 		 */
@@ -40,7 +40,7 @@
 		 *
 		 * @param {Object} settings - an object with settings needed to create <iframe>
 		 */
-		enqueueIframe: function(settings) {
+		enqueueIframe(settings) {
 
 			if (this.isLoaded) {
 				this.createIframe(settings);
@@ -54,25 +54,26 @@
 		 * Load SoundCloud API's script on the header of the document
 		 *
 		 */
-		loadIframeApi: function() {
+		loadIframeApi() {
 			if (!this.isSDKStarted) {
 				// https://developers.soundcloud.com/docs/api/html5-widget#methods
-				var head = doc.getElementsByTagName("head")[0] || document.documentElement,
-					script = doc.createElement("script"),
-					done = false;
+				const head = doc.getElementsByTagName("head")[0] || document.documentElement;
+
+				const script = doc.createElement("script");
+				let done = false;
 
 				script.src = 'https://w.soundcloud.com/player/api.js';
 
 				// Attach handlers for all browsers
-				script.onload = script.onreadystatechange = function() {
-					if ( !done && (!this.readyState || this.readyState === "loaded" || this.readyState === "complete") ) {
+				script.onload = script.onreadystatechange = function () {
+					if (!done && (!this.readyState || this.readyState === "loaded" || this.readyState === "complete")) {
 						done = true;
 						SoundCloudApi.apiReady();
 
 						// Handle memory leak in IE
 						script.onload = script.onreadystatechange = null;
-						if ( head && script.parentNode ) {
-							head.removeChild( script );
+						if (head && script.parentNode) {
+							head.removeChild(script);
 						}
 					}
 				};
@@ -85,7 +86,7 @@
 		 * Process queue of SoundCloud <iframe> element creation
 		 *
 		 */
-		apiReady: function() {
+		apiReady() {
 
 			console.log('Soundcloud API Loaded');
 
@@ -93,7 +94,7 @@
 			this.isSDKLoaded = true;
 
 			while (this.iframeQueue.length > 0) {
-				var settings = this.iframeQueue.pop();
+				const settings = this.iframeQueue.pop();
 				this.createIframe(settings);
 			}
 		},
@@ -103,16 +104,16 @@
 		 *
 		 * @param {Object} settings - an object with settings needed to create <iframe>
 		 */
-		createIframe: function(settings) {
+		createIframe(settings) {
 
 			//console.log('creating iframe', settings);
 
-			var player = SC.Widget(settings.iframe);
-			win['__ready__' + settings.id](player);
+			const player = SC.Widget(settings.iframe);
+			win[`__ready__${settings.id}`](player);
 		}
 	};
 
-	var SoundCloudIframeRenderer = {
+	const SoundCloudIframeRenderer = {
 		name: 'soundcloud_iframe',
 
 		options: {
@@ -125,10 +126,10 @@
 		 * @param {String} type
 		 * @return {Boolean}
 		 */
-		canPlayType: function(type) {
-			var mediaTypes = ['video/soundcloud','video/x-soundcloud'];
+		canPlayType(type) {
+			const mediaTypes = ['video/soundcloud', 'video/x-soundcloud'];
 
-			return mediaTypes.indexOf(type) > -1;
+			return mediaTypes.includes(type);
 		},
 		/**
 		 * Create the player instance and add all native events/methods/properties as possible
@@ -138,46 +139,45 @@
 		 * @param {Object[]} mediaFiles List of sources with format: {src: url, type: x/y-z}
 		 * @return {Object}
 		 */
-		create: function (mediaElement, options, mediaFiles) {
-
-			var sc = {};
+		create(mediaElement, options, mediaFiles) {
+			const sc = {};
 
 			// store main variable
 			sc.options = options;
-			sc.id = mediaElement.id + '_' + options.prefix;
+			sc.id = `${mediaElement.id}_${options.prefix}`;
 			sc.mediaElement = mediaElement;
 
 			// create our fake element that allows events and such to work
 			// insert data
-			var apiStack = [],
-				scPlayerReady = false,
-				scPlayer = null,
-				scIframe = null,
+			const apiStack = [];
 
-				currentTime = 0,
-				duration = 0,
-				bufferedTime = 0,
-				paused = true,
-				volume = 0,
-				muted = false,
-				ended = false,
-				i,
-				il;
+			let scPlayerReady = false;
+			let scPlayer = null;
+			let scIframe = null;
+			let currentTime = 0;
+			let duration = 0;
+			let bufferedTime = 0;
+			let paused = true;
+			const volume = 0;
+			const muted = false;
+			let ended = false;
+			let i;
+			let il;
 
 			// wrappers for get/set
-			var props = mejs.html5media.properties;
-			for (i=0, il=props.length; i<il; i++) {
+			const props = mejs.html5media.properties;
+			for (i = 0, il = props.length; i < il; i++) {
 
 				// wrap in function to retain scope
-				(function(propName) {
+				((propName => {
 
 					// add to flash state that we will store
 
-					var capName = propName.substring(0,1).toUpperCase() + propName.substring(1);
+					const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
 
-					sc['get' + capName] = function() {
+					sc[`get${capName}`] = () => {
 						if (scPlayer !== null) {
-							var value = null;
+							const value = null;
 
 							// figure out how to get dm dta here
 							switch (propName) {
@@ -201,10 +201,10 @@
 
 								case 'buffered':
 									return {
-										start: function() {
+										start() {
 											return 0;
 										},
-										end: function () {
+										end() {
 											return bufferedTime * duration;
 										},
 										length: 1
@@ -219,7 +219,7 @@
 						}
 					};
 
-					sc['set' + capName] = function(value) {
+					sc[`set${capName}`] = value => {
 						//console.log('[' + options.prefix + ' set]: ' + propName + ' = ' + value, t.flashApi);
 
 						if (scPlayer !== null) {
@@ -228,13 +228,13 @@
 							switch (propName) {
 
 								case 'src':
-									var url = typeof value === 'string' ? value : value[0].src;
+									const url = typeof value === 'string' ? value : value[0].src;
 
-									scPlayer.load( url );
+									scPlayer.load(url);
 									break;
 
 								case 'currentTime':
-									scPlayer.seekTo(value*1000);
+									scPlayer.seekTo(value * 1000);
 									break;
 
 								case 'muted':
@@ -243,39 +243,39 @@
 									} else {
 										scPlayer.setVolume(1); // ?
 									}
-									setTimeout(function() {
-										mediaElement.dispatchEvent({type:'volumechange'});
+									setTimeout(() => {
+										mediaElement.dispatchEvent({type: 'volumechange'});
 									}, 50);
 									break;
 
 								case 'volume':
 									scPlayer.setVolume(value);
-									setTimeout(function() {
-										mediaElement.dispatchEvent({type:'volumechange'});
+									setTimeout(() => {
+										mediaElement.dispatchEvent({type: 'volumechange'});
 									}, 50);
 									break;
 
 								default:
-									console.log('dm ' + id, propName, 'UNSUPPORTED property');
+									console.log(`dm ${id}`, propName, 'UNSUPPORTED property');
 							}
 
 						} else {
 							// store for after "READY" event fires
-							apiStack.push({type: 'set', propName: propName, value: value});
+							apiStack.push({type: 'set', propName, value});
 						}
 					};
 
-				})(props[i]);
+				}))(props[i]);
 			}
 
 			// add wrappers for native methods
-			var methods = mejs.html5media.methods;
-			for (i=0, il=methods.length; i<il; i++) {
-				(function(methodName) {
+			const methods = mejs.html5media.methods;
+			for (i = 0, il = methods.length; i < il; i++) {
+				((methodName => {
 
 					// run the method on the Soundcloud API
-					sc[methodName] = function() {
-						console.log('[' + options.prefix + ' ' + methodName + '()]');
+					sc[methodName] = () => {
+						console.log(`[${options.prefix} ${methodName}()]`);
 
 						if (scPlayer !== null) {
 
@@ -291,15 +291,15 @@
 							}
 
 						} else {
-							apiStack.push({type: 'call', methodName: methodName});
+							apiStack.push({type: 'call', methodName});
 						}
 					};
 
-				})(methods[i]);
+				}))(methods[i]);
 			}
 
 			// add a ready method that SC can fire
-			win['__ready__' + sc.id] = function(_scPlayer) {
+			win[`__ready__${sc.id}`] = _scPlayer => {
 
 				scPlayerReady = true;
 				mediaElement.scPlayer = scPlayer = _scPlayer;
@@ -307,17 +307,17 @@
 				console.log('Soundcloud ready', sc.id, scPlayer);
 
 				// do call stack
-				for (i=0, il=apiStack.length; i<il; i++) {
+				for (i = 0, il = apiStack.length; i < il; i++) {
 
-					var stackItem = apiStack[i];
+					const stackItem = apiStack[i];
 
 					console.log('stack', stackItem.type);
 
 					if (stackItem.type === 'set') {
-						var propName = stackItem.propName,
-							capName = propName.substring(0,1).toUpperCase() + propName.substring(1);
+						const propName = stackItem.propName;
+						const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
 
-						sc['set' + capName](stackItem.value);
+						sc[`set${capName}`](stackItem.value);
 					} else if (stackItem.type === 'call') {
 						sc[stackItem.methodName]();
 					}
@@ -325,67 +325,67 @@
 
 				// SoundCloud properties are async, so we don't fire the event until the property callback fires
 
-				scPlayer.bind(SC.Widget.Events.PLAY_PROGRESS, function() {
+				scPlayer.bind(SC.Widget.Events.PLAY_PROGRESS, () => {
 					paused = false;
 					ended = false;
 
-					scPlayer.getPosition(function(_currentTime) {
-						currentTime = _currentTime/1000;
-						var event = mejs.Utils.createEvent('timeupdate', sc);
+					scPlayer.getPosition(_currentTime => {
+						currentTime = _currentTime / 1000;
+						const event = mejs.Utils.createEvent('timeupdate', sc);
 						mediaElement.dispatchEvent(event);
 					});
 				});
 
-				scPlayer.bind(SC.Widget.Events.PAUSE, function() {
+				scPlayer.bind(SC.Widget.Events.PAUSE, () => {
 					paused = true;
 
-					var event = mejs.Utils.createEvent('pause', sc);
+					const event = mejs.Utils.createEvent('pause', sc);
 					mediaElement.dispatchEvent(event);
 				});
-				scPlayer.bind(SC.Widget.Events.PLAY, function() {
+				scPlayer.bind(SC.Widget.Events.PLAY, () => {
 					paused = false;
 					ended = false;
 
-					var event = mejs.Utils.createEvent('play', sc);
+					const event = mejs.Utils.createEvent('play', sc);
 					mediaElement.dispatchEvent(event);
 				});
-				scPlayer.bind(SC.Widget.Events.FINISHED, function() {
+				scPlayer.bind(SC.Widget.Events.FINISHED, () => {
 					paused = false;
 					ended = true;
 
-					var event = mejs.Utils.createEvent('ended', sc);
+					const event = mejs.Utils.createEvent('ended', sc);
 					mediaElement.dispatchEvent(event);
 				});
-				scPlayer.bind(SC.Widget.Events.READY, function() {
-					scPlayer.getDuration(function(_duration) {
-						duration = _duration/1000;
+				scPlayer.bind(SC.Widget.Events.READY, () => {
+					scPlayer.getDuration(_duration => {
+						duration = _duration / 1000;
 
-						var event = mejs.Utils.createEvent('loadedmetadata', sc);
+						const event = mejs.Utils.createEvent('loadedmetadata', sc);
 						mediaElement.dispatchEvent(event);
 					});
 				});
-				scPlayer.bind(SC.Widget.Events.LOAD_PROGRESS, function() {
-					scPlayer.getDuration(function(loadProgress) {
+				scPlayer.bind(SC.Widget.Events.LOAD_PROGRESS, () => {
+					scPlayer.getDuration(loadProgress => {
 						if (duration > 0) {
 							bufferedTime = duration * loadProgress;
 
-							var event = mejs.Utils.createEvent('progress', sc);
+							const event = mejs.Utils.createEvent('progress', sc);
 							mediaElement.dispatchEvent(event);
 						}
 					});
-					scPlayer.getDuration(function(_duration) {
+					scPlayer.getDuration(_duration => {
 						duration = _duration;
 
-						var event = mejs.Utils.createEvent('loadedmetadata', sc);
+						const event = mejs.Utils.createEvent('loadedmetadata', sc);
 						mediaElement.dispatchEvent(event);
 					});
 				});
 
 				// give initial events
-				var initEvents = ['rendererready','loadeddata','loadedmetadata','canplay'];
+				const initEvents = ['rendererready', 'loadeddata', 'loadedmetadata', 'canplay'];
 
-				for (var i=0, il=initEvents.length; i<il; i++) {
-					var event = mejs.Utils.createEvent(initEvents[i], sc);
+				for (var i = 0, il = initEvents.length; i < il; i++) {
+					const event = mejs.Utils.createEvent(initEvents[i], sc);
 					mediaElement.dispatchEvent(event);
 				}
 			};
@@ -396,35 +396,34 @@
 			scIframe.width = 10;
 			scIframe.height = 10;
 			scIframe.frameBorder = 0;
-			scIframe.style.visibility='hidden';
+			scIframe.style.visibility = 'hidden';
 			scIframe.src = mediaFiles[0].src;
 			mediaElement.appendChild(scIframe);
 
 			mediaElement.originalNode.style.display = 'none';
 
-			var
-				scSettings = {
-					iframe: scIframe,
-					id: sc.id
-				};
+			const scSettings = {
+				iframe: scIframe,
+				id: sc.id
+			};
 
 			SoundCloudApi.enqueueIframe(scSettings);
 
-			sc.setSize = function(width, height) {
+			sc.setSize = (width, height) => {
 				// nothing here, audio only
 			};
-			sc.hide = function() {
+			sc.hide = () => {
 				sc.pause();
 				if (scIframe) {
 					scIframe.style.display = 'none';
 				}
 			};
-			sc.show = function() {
+			sc.show = () => {
 				if (scIframe) {
 					scIframe.style.display = '';
 				}
 			};
-			sc.destroy = function() {
+			sc.destroy = () => {
 				scPlayer.destroy();
 			};
 
@@ -434,4 +433,4 @@
 
 	mejs.Renderers.add(SoundCloudIframeRenderer);
 
-})(window, document, window.mejs || {});
+}))(window, document, window.mejs || {});

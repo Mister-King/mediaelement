@@ -5,7 +5,7 @@
  * To activate it, one of the nodes contained in the `<video>` tag must be
  * `<link href="/path/to/action_to_display_content" rel="postroll">`
  */
-(function($) {
+(($ => {
 
 	// Feature configuration
 	$.extend(mejs.MepDefaults, {
@@ -26,21 +26,20 @@
 		 * @param {$} layers
 		 * @param {HTMLElement} media
 		 */
-		buildpostroll: function(player, controls, layers, media) {
-			var
-				t = this,
-				postrollTitle = t.options.postrollCloseText ? t.options.postrollCloseText : mejs.i18n.t('mejs.close'),
-				postrollLink = t.container.find('link[rel="postroll"]').attr('href');
+		buildpostroll(player, controls, layers, media) {
+			const t = this;
+			const postrollTitle = t.options.postrollCloseText ? t.options.postrollCloseText : mejs.i18n.t('mejs.close');
+			const postrollLink = t.container.find('link[rel="postroll"]').attr('href');
 
 			if (typeof postrollLink !== 'undefined') {
 				player.postroll =
-					$('<div class="mejs-postroll-layer mejs-layer"><a class="mejs-postroll-close" onclick="$(this).parent().hide();return false;">' + postrollTitle + '</a><div class="mejs-postroll-layer-content"></div></div>').prependTo(layers).hide();
+					$(`<div class="mejs-postroll-layer mejs-layer"><a class="mejs-postroll-close" onclick="$(this).parent().hide();return false;">${postrollTitle}</a><div class="mejs-postroll-layer-content"></div></div>`).prependTo(layers).hide();
 
-				t.media.addEventListener('ended', function (e) {
+				t.media.addEventListener('ended', e => {
 					$.ajax({
 						dataType: 'html',
 						url: postrollLink,
-						success: function (data, textStatus) {
+						success(data, textStatus) {
 							layers.find('.mejs-postroll-layer-content').html(data);
 						}
 					});
@@ -50,4 +49,4 @@
 		}
 	});
 
-})(mejs.$);
+}))(mejs.$);

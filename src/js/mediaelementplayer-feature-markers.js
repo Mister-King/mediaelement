@@ -6,7 +6,7 @@
  * Marker position and a reference to the MediaElement Player object is passed to the registered callback function for
  * any post processing. Marker color is configurable.
  */
-(function ($) {
+(($ => {
 
 	// Feature configuration
 	$.extend(mejs.MepDefaults, {
@@ -22,7 +22,7 @@
 		/**
 		 * @type {Function}
 		 */
-		markerCallback: function () {
+		markerCallback() {
 		}
 	});
 
@@ -36,23 +36,25 @@
 		 * @param {$} layers
 		 * @param {HTMLElement} media
 		 */
-		buildmarkers: function (player, controls, layers, media) {
-			var
-				t = this,
-				i = 0,
-				currentPos = -1,
-				currentMarker = -1,
-				lastPlayPos = -1, //Track backward seek
-				lastMarkerCallBack = -1; //Prevents successive firing of callbacks
+		buildmarkers(player, controls, layers, media) {
+			const t = this; //Prevents successive firing of callbacks
+			let i = 0;
+			let currentPos = -1;
+			let currentMarker = -1;
+
+			let //Track backward seek
+				lastPlayPos = -1;
+
+			let lastMarkerCallBack = -1;
 
 			for (i = 0; i < player.options.markers.length; ++i) {
 				controls.find('.mejs-time-total').append('<span class="mejs-time-marker"></span>');
 			}
 
-			media.addEventListener('durationchange', function (e) {
-				player.setmarkers(controls);
+			media.addEventListener('durationchange', e => {
+				player.setMarkers(controls);
 			});
-			media.addEventListener('timeupdate', function (e) {
+			media.addEventListener('timeupdate', e => {
 				currentPos = Math.floor(media.currentTime);
 				if (lastPlayPos > currentPos) {
 					if (lastMarkerCallBack > currentPos) {
@@ -71,30 +73,28 @@
 				}
 
 			}, false);
-
 		},
 		/**
 		 * Create markers in the progress bar
 		 *
 		 * @param {$} controls
 		 */
-		setmarkers: function (controls) {
-			var t = this,
-				i = 0,
-				left;
+		setMarkers(controls) {
+			const t = this;
+			let i = 0;
+			let left;
 
 			for (i = 0; i < t.options.markers.length; ++i) {
 				if (Math.floor(t.options.markers[i]) <= t.media.duration && Math.floor(t.options.markers[i]) >= 0) {
 					left = 100 * Math.floor(t.options.markers[i]) / t.media.duration;
 					$(controls.find('.mejs-time-marker')[i]).css({
 						"width": "1px",
-						"left": left + "%",
+						"left": `${left}%`,
 						"background": t.options.markerColor
 					});
 				}
 			}
-
 		}
 	});
 
-})(mejs.$);
+}))(mejs.$);

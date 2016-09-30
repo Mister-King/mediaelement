@@ -3,7 +3,7 @@
  *
  * This feature creates a button to forward media a specific number of seconds.
  */
-(function ($) {
+(($ => {
 	// Jump forward button
 
 	$.extend(mejs.MepDefaults, {
@@ -27,17 +27,16 @@
 		 * @param {$} layers
 		 * @param {HTMLElement} media
 		 */
-		buildjumpforward: function (player, controls, layers, media) {
-			var
-				t = this,
-				forwardTitle = t.options.jumpForwardText ? t.options.jumpForwardText : mejs.i18n.t('mejs.time-jump-forward'),
-				// Replace %1 with skip back interval
-				forwardText = forwardTitle.replace('%1', forwardTitle),
-				// create the loop button
+		buildjumpforward(player, controls, layers, media) {
+			const t = this;
+			const forwardTitle = t.options.jumpForwardText ? t.options.jumpForwardText : mejs.i18n.t('mejs.time-jump-forward');
+
+			const // Replace %1 with skip back interval
+				forwardText = forwardTitle.replace('%1', forwardTitle);
+
+			const // create the loop button
 				loop =
-					$('<div class="mejs-button mejs-jump-forward-button">' +
-						'<button type="button" aria-controls="' + t.id + '" title="' + forwardText + '" aria-label="' + forwardText + '">' + t.options.jumpForwardInterval + '</button>' +
-						'</div>')
+					$(`<div class="mejs-button mejs-jump-forward-button"><button type="button" aria-controls="${t.id}" title="${forwardText}" aria-label="${forwardText}">${t.options.jumpForwardInterval}</button></div>`)
 					// append it to the toolbar
 					.appendTo(controls)
 					// add a click toggle event
@@ -50,4 +49,4 @@
 		}
 	});
 
-})(mejs.$);
+}))(mejs.$);

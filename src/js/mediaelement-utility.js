@@ -4,7 +4,7 @@
  * This file contains global functions and polyfills needed to support old browsers.
  *
  */
-(function (win, doc, mejs, undefined) {
+(((win, doc, mejs, undefined) => {
 
 	/**
 	 * @class {mejs.Utility}
@@ -23,17 +23,12 @@
 		 * @param {Function} onGet
 		 * @param {Function} onSet
 		 */
-		addProperty: function (obj, name, onGet, onSet) {
-
+		addProperty(obj, name, onGet, onSet) {
 			// wrapper functions
-			var
-				oldValue = obj[name],
-				getFn = function () {
-					return onGet.apply(obj, [oldValue]);
-				},
-				setFn = function (newValue) {
-					return oldValue = onSet.apply(obj, [newValue]);
-				};
+			let oldValue = obj[name];
+
+			const getFn = () => onGet.apply(obj, [oldValue]);
+			const setFn = newValue => oldValue = onSet.apply(obj, [newValue]);
 
 			// Modern browsers, IE9+ (IE8 only works on DOM objects, not normal JS objects)
 			if (Object.defineProperty) {
@@ -53,7 +48,7 @@
 				// must be a real DOM object (to have attachEvent) and must be attached to document (for onpropertychange to fire)
 			} else {
 
-				var onPropertyChange = function (event) {
+				const onPropertyChange = event => {
 
 					//console.log('onPropertyChange', event.propertyName);
 
@@ -63,13 +58,11 @@
 						obj.detachEvent('onpropertychange', onPropertyChange);
 
 						// get the changed value, run it through the set function
-						var newValue = setFn(obj[name]);
+						const newValue = setFn(obj[name]);
 
 						// restore the get function
 						obj[name] = getFn;
-						obj[name].toString = function () {
-							return getFn().toString()
-						};
+						obj[name].toString = () => getFn().toString();
 
 						// restore the event
 						obj.attachEvent('onpropertychange', onPropertyChange);
@@ -78,9 +71,7 @@
 
 				try {
 					obj[name] = getFn;
-					obj[name].toString = function () {
-						return getFn().toString()
-					};
+					obj[name].toString = () => getFn().toString();
 				} catch (ex) {
 					console.log('ERROR adding', name);
 				}
@@ -96,8 +87,8 @@
 		 * @param {HTMLElement} target
 		 * @return {Object}
 		 */
-		createEvent: function (eventName, target) {
-			var event = null;
+		createEvent(eventName, target) {
+			let event = null;
 
 			if (doc.createEvent) {
 				event = doc.createEvent('Event');
@@ -122,7 +113,7 @@
 		 * @param {String} type
 		 * @return {String}
 		 */
-		getMimeFromType: function (type) {
+		getMimeFromType(type) {
 			if (type && ~type.indexOf(';')) {
 				return type.substr(0, type.indexOf(';'));
 			} else {
@@ -137,7 +128,7 @@
 		 * @param {String} type
 		 * @return {String}
 		 */
-		formatType: function (url, type) {
+		formatType(url, type) {
 
 			// if no type is supplied, fake it with the extension
 			if (url && !type) {
@@ -153,12 +144,11 @@
 		 * @param {String} url
 		 * @return {String}
 		 */
-		getTypeFromFile: function (url) {
-
-			var type = null;
+		getTypeFromFile(url) {
+			let type = null;
 
 			// do type checks first
-			for (var i = 0, il = this.typeChecks.length; i < il; i++) {
+			for (let i = 0, il = this.typeChecks.length; i < il; i++) {
 				type = this.typeChecks[i](url);
 
 				if (type !== null) {
@@ -167,10 +157,11 @@
 			}
 
 			// the do standard extension check
-			var ext = this.getExtension(url),
-				normalizedExt = this.normalizeExtension(ext);
+			const ext = this.getExtension(url);
 
-			type = (/(mp4|m4v|ogg|ogv|webm|webmv|flv|wmv|mpeg|mov)/gi.test(ext) ? 'video' : 'audio') + '/' + normalizedExt;
+			const normalizedExt = this.normalizeExtension(ext);
+
+			type = `${/(mp4|m4v|ogg|ogv|webm|webmv|flv|wmv|mpeg|mov)/gi.test(ext) ? 'video' : 'audio'}/${normalizedExt}`;
 
 			return type;
 		},
@@ -181,9 +172,9 @@
 		 * @param {String} url
 		 * @return {String}
 		 */
-		getExtension: function (url) {
-			var withoutQuerystring = url.split('?')[0],
-				ext = ~withoutQuerystring.indexOf('.') ? withoutQuerystring.substring(withoutQuerystring.lastIndexOf('.') + 1) : '';
+		getExtension(url) {
+			const withoutQuerystring = url.split('?')[0];
+			const ext = ~withoutQuerystring.indexOf('.') ? withoutQuerystring.substring(withoutQuerystring.lastIndexOf('.') + 1) : '';
 
 			return ext;
 		},
@@ -194,7 +185,7 @@
 		 * @param {String} extension
 		 * @return {String}
 		 */
-		normalizeExtension: function (extension) {
+		normalizeExtension(extension) {
 
 			switch (extension) {
 				case 'mp4':
@@ -218,7 +209,7 @@
 		 * @param {String} url
 		 * @return {String}
 		 */
-		encodeUrl: function (url) {
+		encodeUrl(url) {
 			return encodeURIComponent(url); //.replace(/\?/gi,'%3F').replace(/=/gi,'%3D').replace(/&/gi,'%26');
 		},
 
@@ -227,7 +218,7 @@
 		 * @param {String} output
 		 * @return {string}
 		 */
-		escapeHTML: function (output) {
+		escapeHTML(output) {
 			return output.toString().split('&').join('&amp;').split('<').join('&lt;').split('"').join('&quot;');
 		},
 
@@ -236,9 +227,9 @@
 		 * @param {String} url
 		 * @return {String}
 		 */
-		absolutizeUrl: function (url) {
-			var el = doc.createElement('div');
-			el.innerHTML = '<a href="' + this.escapeHTML(url) + '">x</a>';
+		absolutizeUrl(url) {
+			const el = doc.createElement('div');
+			el.innerHTML = `<a href="${this.escapeHTML(url)}">x</a>`;
 			return el.firstChild.href;
 		},
 
@@ -251,7 +242,7 @@
 		 * @param {number} fps - Frames per second
 		 * @return {String}
 		 */
-		secondsToTimeCode: function (time, forceHours, showFrameCount, fps) {
+		secondsToTimeCode(time, forceHours, showFrameCount, fps) {
 			//add framecount
 			if (typeof showFrameCount === 'undefined') {
 				showFrameCount = false;
@@ -259,15 +250,14 @@
 				fps = 25;
 			}
 
-			var hours = Math.floor(time / 3600) % 24,
-				minutes = Math.floor(time / 60) % 60,
-				seconds = Math.floor(time % 60),
-				frames = Math.floor(((time % 1) * fps).toFixed(3)),
-				result =
-					( (forceHours || hours > 0) ? (hours < 10 ? '0' + hours : hours) + ':' : '')
-					+ (minutes < 10 ? '0' + minutes : minutes) + ':'
-					+ (seconds < 10 ? '0' + seconds : seconds)
-					+ ((showFrameCount) ? ':' + (frames < 10 ? '0' + frames : frames) : '');
+			const hours = Math.floor(time / 3600) % 24;
+			const minutes = Math.floor(time / 60) % 60;
+			const seconds = Math.floor(time % 60);
+			const frames = Math.floor(((time % 1) * fps).toFixed(3));
+
+			const result =
+				`${( (forceHours || hours > 0) ? (hours < 10 ? '0' + hours : hours) + ':' : '')
+				+ (minutes < 10 ? '0' + minutes : minutes)}:${seconds < 10 ? '0' + seconds : seconds}${(showFrameCount) ? ':' + (frames < 10 ? '0' + frames : frames) : ''}`;
 
 			return result;
 		},
@@ -281,7 +271,7 @@
 		 * @param {number} fps - Frames per second
 		 * @return {number}
 		 */
-		timeCodeToSeconds: function (time, forceHours, showFrameCount, fps) {
+		timeCodeToSeconds(time, forceHours, showFrameCount, fps) {
 			if (typeof showFrameCount === 'undefined') {
 				showFrameCount = false;
 			} else if (typeof fps === 'undefined') {
@@ -292,11 +282,12 @@
 			// 00:00 		MM:SS
 			// 00			SS
 
-			var parts = time.split(':'),
-				hours = 0,
-				minutes = 0,
-				frames = 0,
-				seconds = 0;
+			const parts = time.split(':');
+
+			let hours = 0;
+			let minutes = 0;
+			let frames = 0;
+			let seconds = 0;
 
 			switch (parts.length) {
 				default:
@@ -328,12 +319,16 @@
 		 *
 		 * @return {Object}
 		 */
-		extend: function () {
+		extend() {
 			// borrowed from ender
-			var options, name, src, copy,
-				target = arguments[0] || {},
-				i = 1,
-				length = arguments.length;
+			let options;
+
+			let name;
+			let src;
+			let copy;
+			let target = arguments[0] || {};
+			let i = 1;
+			const length = arguments.length;
 
 			// Handle case when target is a string or something (possible in deep copy)
 			if (typeof target !== "object" && typeof target !== "function") {
@@ -373,7 +368,7 @@
 		 * @param {Object} options
 		 * @param {number} fps - Frames per second
 		 */
-		calculateTimeFormat: function (time, options, fps) {
+		calculateTimeFormat(time, options, fps) {
 			if (time < 0) {
 				time = 0;
 			}
@@ -382,36 +377,37 @@
 				fps = 25;
 			}
 
-			var format = options.timeFormat,
-				firstChar = format[0],
-				firstTwoPlaces = (format[1] == format[0]),
-				separatorIndex = firstTwoPlaces ? 2 : 1,
-				separator = ':',
-				hours = Math.floor(time / 3600) % 24,
-				minutes = Math.floor(time / 60) % 60,
-				seconds = Math.floor(time % 60),
-				frames = Math.floor(((time % 1) * fps).toFixed(3)),
-				lis = [
-					[frames, 'f'],
-					[seconds, 's'],
-					[minutes, 'm'],
-					[hours, 'h']
-				];
+			let format = options.timeFormat;
+			let firstChar = format[0];
+			const firstTwoPlaces = (format[1] == format[0]);
+			const separatorIndex = firstTwoPlaces ? 2 : 1;
+			let separator = ':';
+			const hours = Math.floor(time / 3600) % 24;
+			const minutes = Math.floor(time / 60) % 60;
+			const seconds = Math.floor(time % 60);
+			const frames = Math.floor(((time % 1) * fps).toFixed(3));
+
+			const lis = [
+				[frames, 'f'],
+				[seconds, 's'],
+				[minutes, 'm'],
+				[hours, 'h']
+			];
 
 			// Try to get the separator from the format
 			if (format.length < separatorIndex) {
 				separator = format[separatorIndex];
 			}
 
-			var required = false;
+			let required = false;
 
-			for (var i = 0, len = lis.length; i < len; i++) {
-				if (format.indexOf(lis[i][1]) !== -1) {
+			for (let i = 0, len = lis.length; i < len; i++) {
+				if (format.includes(lis[i][1])) {
 					required = true;
 				}
 				else if (required) {
-					var hasNextValue = false;
-					for (var j = i; j < len; j++) {
+					let hasNextValue = false;
+					for (let j = i; j < len; j++) {
 						if (lis[j][0] > 0) {
 							hasNextValue = true;
 							break;
@@ -441,22 +437,22 @@
 		 * @param {String} SMPTE
 		 * @return {number}
 		 */
-		convertSMPTEtoSeconds: function (SMPTE) {
+		convertSMPTEtoSeconds(SMPTE) {
 			if (typeof SMPTE !== 'string')
 				return false;
 
 			SMPTE = SMPTE.replace(',', '.');
 
-			var secs = 0,
-				decimalLen = (SMPTE.indexOf('.') != -1) ? SMPTE.split('.')[1].length : 0,
-				multiplier = 1;
+			let secs = 0;
+			const decimalLen = (SMPTE.includes('.')) ? SMPTE.split('.')[1].length : 0;
+			let multiplier = 1;
 
 			SMPTE = SMPTE.split(':').reverse();
 
-			for (var i = 0; i < SMPTE.length; i++) {
+			for (let i = 0; i < SMPTE.length; i++) {
 				multiplier = 1;
 				if (i > 0) {
-					multiplier = Math.pow(60, i);
+					multiplier = 60 ** i;
 				}
 				secs += Number(SMPTE[i]) * multiplier;
 			}
@@ -468,16 +464,15 @@
 	 * @class {mejs.MediaFeatures}
 	 * @class {mejs.Features}
 	 */
-	mejs.MediaFeatures = mejs.Features = (function () {
-
-		var features = {},
-			nav = win.navigator,
-			ua = nav.userAgent.toLowerCase(),
-			html5Elements = ['source', 'track', 'audio', 'video'],
-			video = null;
+	mejs.MediaFeatures = mejs.Features = ((() => {
+		const features = {};
+		const nav = win.navigator;
+		const ua = nav.userAgent.toLowerCase();
+		const html5Elements = ['source', 'track', 'audio', 'video'];
+		let video = null;
 
 		// for IE
-		for (var i = 0, il = html5Elements.length; i < il; i++) {
+		for (let i = 0, il = html5Elements.length; i < il; i++) {
 			video = doc.createElement(html5Elements[i]);
 		}
 
@@ -485,7 +480,7 @@
 		features.isiPhone = (ua.match(/iphone/i) !== null);
 		features.isiOS = features.isiPhone || features.isiPad;
 		features.isAndroid = (ua.match(/android/i) !== null);
-		features.isIE = (nav.appName.toLowerCase().indexOf("microsoft") != -1 || nav.appName.toLowerCase().match(/trident/gi) !== null);
+		features.isIE = (nav.appName.toLowerCase().includes("microsoft") || nav.appName.toLowerCase().match(/trident/gi) !== null);
 		features.isChrome = (ua.match(/chrome/gi) !== null);
 		features.isFirefox = (ua.match(/firefox/gi) !== null);
 
@@ -503,13 +498,11 @@
 		features.hasTouch = ('ontouchstart' in win);
 		features.svg = !!doc.createElementNS && !!doc.createElementNS('http://www.w3.org/2000/svg', 'svg').createSVGRect;
 
-		features.supportsPointerEvents = (function () {
-			var
-				element = doc.createElement('x'),
-				documentElement = doc.documentElement,
-				getComputedStyle = win.getComputedStyle,
-				supports
-			;
+		features.supportsPointerEvents = ((() => {
+			const element = doc.createElement('x');
+			const documentElement = doc.documentElement;
+			const getComputedStyle = win.getComputedStyle;
+			let supports;
 
 			if (!('pointerEvents' in element.style)) {
 				return false;
@@ -521,7 +514,7 @@
 			supports = getComputedStyle && getComputedStyle(element, '').pointerEvents === 'auto';
 			documentElement.removeChild(element);
 			return !!supports;
-		})();
+		}))();
 
 
 		// Older versions of Firefox can't move plugins around without it resetting,
@@ -568,7 +561,7 @@
 				features.fullScreenEventName = 'MSFullscreenChange';
 			}
 
-			features.isFullScreen = function () {
+			features.isFullScreen = () => {
 				if (features.hasMozNativeFullScreen) {
 					return doc.mozFullScreen;
 
@@ -580,7 +573,7 @@
 				}
 			};
 
-			features.requestFullScreen = function (el) {
+			features.requestFullScreen = el => {
 
 				if (features.hasWebkitNativeFullScreen) {
 					el.webkitRequestFullScreen();
@@ -591,7 +584,7 @@
 				}
 			};
 
-			features.cancelFullScreen = function () {
+			features.cancelFullScreen = () => {
 				if (features.hasWebkitNativeFullScreen) {
 					doc.webkitCancelFullScreen();
 
@@ -617,6 +610,6 @@
 		features.supportsMediaTag = (typeof video.canPlayType !== 'undefined' || features.hasMse);
 
 		return features;
-	})();
+	}))();
 
-})(window, document, window.mejs || {});
+}))(window, document, window.mejs || {});
