@@ -12,10 +12,7 @@
  * @params
  *  - exports - CommonJS, window ..
  */
-;(function (exports, undefined) {
-
-	"use strict";
-
+;(((exports, undefined) => {
 	if (typeof exports.nl === 'undefined') {
 		exports.nl = {
 			// me-shim
@@ -68,5 +65,4 @@
 			'mejs.source-chooser': 'Bronkiezer'
 		};
 	}
-
-}(mejs.i18n.locale.strings));
+})(mejs.i18n.locale.strings));
