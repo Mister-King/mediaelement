@@ -1,22 +1,57 @@
 /*
- * analytics.js Google Analytics Plugin
+ *
  * Requires JQuery
  */
-
+/**
+ * Google Analytics Plugin
+ *
+ * This feature enables GA to send certain events, such as play, pause, ended, etc. It requires previous configuration
+ * on GA to send events properly.
+ * @see https://developers.google.com/analytics/devguides/collection/analyticsjs/events
+ */
 (($ => {
 
+	// Feature configuration
 	$.extend(mejs.MepDefaults, {
+		/**
+		 * @type {String}
+		 */
 		googleAnalyticsTitle: '',
+		/**
+		 * @type {String}
+		 */
 		googleAnalyticsCategory: 'Videos',
-		googleAnalyticsEventPlay: 'mejs.play',
-		googleAnalyticsEventPause: 'mejs.pause',
+		/**
+		 * @type {String}
+		 */
+		googleAnalyticsEventPlay: 'Play',
+		/**
+		 * @type {String}
+		 */
+		googleAnalyticsEventPause: 'Pause',
+		/**
+		 * @type {String}
+		 */
 		googleAnalyticsEventEnded: 'Ended',
+		/**
+		 * @type {String}
+		 */
 		googleAnalyticsEventTime: 'Time'
 	});
 
 
 	$.extend(MediaElementPlayer.prototype, {
-		builduniversalgoogleanalytics(player, controls, layers, media) {
+
+		/**
+		 * Feature constructor.
+		 *
+		 * Always has to be prefixed with `build` and the name that will be used in MepDefaults.features list
+		 * @param {MediaElementPlayer} player
+		 * @param {$} controls
+		 * @param {$} layers
+		 * @param {HTMLElement} media
+		 */
+		buildgoogleanalytics(player, controls, layers, media) {
 
 			media.addEventListener('play', () => {
 				if (typeof ga != 'undefined') {

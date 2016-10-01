@@ -29,6 +29,20 @@
 			const sourceTitle = t.options.sourcechooserText ? t.options.sourcechooserText : mejs.i18n.t('mejs.source-chooser');
 			let hoverTimeout;
 
+			// add to list
+			const sources = [];
+
+			for (const j in this.node.children) {
+				const s = this.node.children[j];
+				if (s.nodeName === 'SOURCE') {
+					sources.push(s);
+				}
+			}
+
+			if (sources.length <= 1) {
+				return;
+			}
+
 			player.sourcechooserButton =
 				$(`<div class="mejs-button mejs-sourcechooser-button"><button type="button" role="button" aria-haspopup="true" aria-owns="${t.id}" title="${sourceTitle}" aria-label="${sourceTitle}"></button><div class="mejs-sourcechooser-selector mejs-offscreen" role="menu" aria-expanded="false" aria-hidden="true"><ul></ul></div></div>`)
 				.appendTo(controls)
@@ -84,7 +98,6 @@
 
 				// handle clicks to the source radio buttons
 				.delegate('input[type=radio]', 'click', function () {
-					console.log('click');
 					// set aria states
 					$(this).attr('aria-selected', true).attr('checked', 'checked');
 					$(this).closest('.mejs-sourcechooser-selector').find('input[type=radio]').not(this).attr('aria-selected', 'false').removeAttr('checked');
@@ -123,9 +136,8 @@
 					}
 				});
 
-			// add to list
-			for (const i in this.node.children) {
-				const src = this.node.children[i];
+			for (const i in sources) {
+				const src = sources[i];
 				if (typeof src.type !== 'undefined' && src.nodeName === 'SOURCE' && media.canPlayType !== null) {
 					player.addSourceButton(src.src, src.title, src.type, media.src === src.src);
 				}

@@ -307,15 +307,16 @@
 										youTubeApi.unMute(); // ?
 									}
 									setTimeout(() => {
-										mediaElement.dispatchEvent({type: 'volumechange'});
+
+										const event = mejs.Utils.createEvent('volumechange', youtube);
+										mediaElement.dispatchEvent(event);
 									}, 50);
 									break;
 
 								case 'volume':
 									youTubeApi.setVolume(value);
-									setTimeout(() => {
-										mediaElement.dispatchEvent({type: 'volumechange'});
-									}, 50);
+									const event = mejs.Utils.createEvent('volumechange', youtube);
+									mediaElement.dispatchEvent(event);
 									break;
 
 								default:
@@ -370,6 +371,7 @@
 			const height = mediaElement.originalNode.height;
 			const width = mediaElement.originalNode.width;
 			const videoId = YouTubeApi.getYouTubeId(mediaFiles[0].src);
+
 			const defaultVars = {
 				controls: 0,
 				rel: 0,
@@ -393,7 +395,10 @@
 
 						youTubeApiReady = true;
 						mediaElement.youTubeApi = youTubeApi = e.target;
-						mediaElement.youTubeState = youTubeState = {paused: true, ended: false};
+						mediaElement.youTubeState = youTubeState = {
+							paused: true,
+							ended: false
+						};
 
 						// do call stack
 						for (i = 0, il = apiStack.length; i < il; i++) {

@@ -103,7 +103,9 @@
 			};
 
 			const /**
-			 * Update elements in progress bar for accessibility purposes
+			 * Update elements in progress bar for accessibility purposes only when player is paused.
+			 *
+			 * This is to avoid attempts to repeat the time over and over again when media is playing.
 			 * @private
 			 */
 			updateSlider = () => {
@@ -111,15 +113,20 @@
 				const seconds = media.currentTime, timeSliderText = mejs.i18n.t('mejs.time-slider'), time = mejs.Utility.secondsToTimeCode(seconds, player.options.alwaysShowHours), duration = media.duration;
 
 				t.slider.attr({
-					'aria-label': timeSliderText,
-					'aria-valuemin': 0,
-					'aria-valuemax': duration,
-					'aria-valuenow': seconds,
-					'aria-valuetext': time,
 					'role': 'slider',
 					'tabindex': 0
 				});
-
+				if (media.paused) {
+					t.slider.attr({
+						'aria-label': timeSliderText,
+						'aria-valuemin': 0,
+						'aria-valuemax': duration,
+						'aria-valuenow': seconds,
+						'aria-valuetext': time
+					});
+				} else {
+					t.slider.removeAttr('aria-label aria-valuemin aria-valuemax aria-valuenow aria-valuetext');
+				}
 			};
 
 			const /**
@@ -313,4 +320,5 @@
 
 		}
 	});
+
 }))(mejs.$);

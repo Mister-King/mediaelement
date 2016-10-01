@@ -129,7 +129,7 @@
 			const /**
 			 * @private
 			 */
-			handleVolumeMove = () => {
+			handleVolumeMove = e => {
 				let volume = null;
 				const totalOffset = volumeTotal.offset();
 
@@ -206,10 +206,10 @@
 			.bind('mouseover', () => {
 				mouseIsOver = true;
 			})
-			.bind('mousedown', () => {
-				handleVolumeMove();
-				t.globalBind('mousemove.vol', () => {
-					handleVolumeMove();
+			.bind('mousedown', e => {
+				handleVolumeMove(e);
+				t.globalBind('mousemove.vol', e => {
+					handleVolumeMove(e);
 				});
 				t.globalBind('mouseup.vol', () => {
 					mouseIsDown = false;

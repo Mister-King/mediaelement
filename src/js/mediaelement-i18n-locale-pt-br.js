@@ -15,19 +15,19 @@
  *  - exports - CommonJS, window ..
  */
 ;(((exports, undefined) => {
-    if (typeof exports['pt-BR'] === 'undefined') {
-        exports.pt = {
-            'mejs.none' : "Sem legendas",
-            'mejs.unmute' : "Tirar silêncio",
-            'mejs.fullscreen' : "Tela inteira",
-            'mejs.download-file' : "Baixar arquivo",
-            'mejs.mute-toggle' : "Alternar silêncio",
-            'mejs.captions-subtitles' : "Legendas",
-            'mejs.download-video' : "Baixar vídeo",
-            'mejs.mute' : "Silenciar",
-            'mejs.fullscreen-off' : "Sair da tela inteira",
-            'mejs.fullscreen-on' : "Ir para tela inteira",
-            'mejs.close' : "Fechar"
-        };
-    }
+	if (typeof exports['pt-BR'] === 'undefined') {
+		exports.pt = {
+			'mejs.none': "Sem legendas",
+			'mejs.unmute': "Tirar silêncio",
+			'mejs.fullscreen': "Tela inteira",
+			'mejs.download-file': "Baixar arquivo",
+			'mejs.mute-toggle': "Alternar silêncio",
+			'mejs.captions-subtitles': "Legendas",
+			'mejs.download-video': "Baixar vídeo",
+			'mejs.mute': "Silenciar",
+			'mejs.fullscreen-off': "Sair da tela inteira",
+			'mejs.fullscreen-on': "Ir para tela inteira",
+			'mejs.close': "Fechar"
+		};
+	}
 })(mejs.i18n.locale.strings));

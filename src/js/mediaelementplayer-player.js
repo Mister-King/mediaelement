@@ -1,4 +1,4 @@
-(($ => {
+(((mejs, $, win, doc, undefined) => {
 
 	// default player values
 	mejs.MepDefaults = {
@@ -207,6 +207,77 @@
 	mejs.mepIndex = 0;
 
 	mejs.players = {};
+
+	/**
+	 *
+	 * @param {Object} obj
+	 * @param {String} type
+	 * @param {Function} fn
+	 */
+	mejs.addEvent = (obj, type, fn) => {
+		if (obj.addEventListener) {
+			obj.addEventListener(type, fn, false);
+		} else if (obj.attachEvent) {
+			obj[`e${type}${fn}`] = fn;
+			obj[type + fn] = () => {
+				obj[`e${type}${fn}`](window.event);
+			};
+			obj.attachEvent(`on${type}`, obj[type + fn]);
+		}
+
+	};
+
+	/**
+	 *
+	 * @param {Object} obj
+	 * @param {String} type
+	 * @param {Function} fn
+	 */
+	mejs.removeEvent = (obj, type, fn) => {
+
+		if (obj.removeEventListener) {
+			obj.removeEventListener(type, fn, false);
+		} else if (obj.detachEvent) {
+			obj.detachEvent(`on${type}`, obj[type + fn]);
+			obj[type + fn] = null;
+		}
+	};
+
+	/**
+	 *
+	 * @param {String} className
+	 * @param {HTMLElement} node
+	 * @param {String} tag
+	 * @return {HTMLElement[]}
+	 */
+	mejs.getElementsByClassName = function getElementsByClassName(className, node, tag) {
+		if (node == null) {
+			node = document;
+		}
+		if (node.getElementsByClassName != null) {
+			return node.getElementsByClassName(className);
+		}
+		if (tag == null) {
+			tag = '*';
+		}
+
+		const classElements = [];
+		let j = 0;
+		let teststr;
+		const els = node.getElementsByTagName(tag);
+		const elsLen = els.length;
+
+		for (i = 0; i < elsLen; i++) {
+			if (els[i].className.includes(className)) {
+				teststr = `,${els[i].className.split(" ").join(",")},`;
+				if (teststr.includes(`,${className},`)) {
+					classElements[j] = els[i];
+					j++;
+				}
+			}
+		}
+		return classElements;
+	};
 
 	/**
 	 * Wrap a MediaElement object in player controls
@@ -674,14 +745,16 @@
 							//console.log('media clicked', t.media, t.media.paused);
 
 							if (t.options.clickToPlayPause) {
-								if (t.media.paused) {
+								const button = t.$media.closest('.mejs-container').find('.mejs-overlay-button');
+								const pressed = button.attr('aria-pressed');
+								if (t.media.paused && pressed) {
+									t.pause();
+								} else if (t.media.paused) {
 									t.play();
 								} else {
 									t.pause();
 								}
 
-								const button = t.$media.closest('.mejs-container').find('.mejs-overlay-button');
-								const pressed = button.attr('aria-pressed');
 								button.attr('aria-pressed', !pressed);
 							}
 						};
@@ -748,16 +821,32 @@
 				t.media.addEventListener('play', () => {
 					let playerIndex;
 
+					t.hasFocus = true;
+
 					// go through all other players
 					for (playerIndex in mejs.players) {
 						const p = mejs.players[playerIndex];
-						if (p.id != t.id && t.options.pauseOtherPlayers && !p.paused && !p.ended) {
+						if (p.id !== t.id && t.options.pauseOtherPlayers && !p.paused && !p.ended) {
 							p.pause();
+							p.hasFocus = false;
 						}
-						p.hasFocus = false;
 					}
 
+				}, false);
+
+				t.media.addEventListener('pause', () => {
+					let playerIndex;
+
 					t.hasFocus = true;
+
+					for (playerIndex in mejs.players) {
+						const p = mejs.players[playerIndex];
+						if (p.id !== t.id && t.options.pauseOtherPlayers && !p.paused && !p.ended) {
+							p.hasFocus = false;
+						}
+					}
+
+					t.media.pause();
 				}, false);
 
 
@@ -774,7 +863,12 @@
 
 						}
 					}
-					t.media.pause();
+
+					if (typeof t.media.stop === 'function') {
+						t.media.stop();
+					} else {
+						t.media.pause();
+					}
 
 					if (t.setProgressRail) {
 						t.setProgressRail();
@@ -1237,14 +1331,25 @@
 				bigPlay =
 					$(`<div class="mejs-overlay mejs-layer mejs-overlay-play"><div class="mejs-overlay-button" role="button" aria-label="${mejs.i18n.t('mejs.play')}" aria-pressed="false"></div></div>`)
 					.appendTo(layers)
-					.bind('click', function () {	 // Removed 'touchstart' due issues on Samsung Android devices where a tap on bigPlay started and immediately stopped the video
+					.bind('click', () => {	 // Removed 'touchstart' due issues on Samsung Android devices where a tap on bigPlay started and immediately stopped the video
 						if (t.options.clickToPlayPause) {
-							if (media.paused) {
+
+							const button = t.$media.closest('.mejs-container').find('.mejs-overlay-button'), pressed = button.attr('aria-pressed');
+
+							if (media.paused && pressed) {
+								media.pause();
+							} else if (media.paused) {
 								media.play();
+							} else {
+								media.pause();
 							}
 
-							const button = $(this).find('.mejs-overlay-button');
-							const pressed = button.attr('aria-pressed');
+							if (media.paused) {
+								media.play();
+							} else {
+								media.pause();
+							}
+
 							button.attr('aria-pressed', !!pressed);
 						}
 					});
@@ -1571,4 +1676,4 @@
 	// push out to window
 	window.MediaElementPlayer = mejs.MediaElementPlayer;
 
-}))(mejs.$);
+}))(mejs, mejs.$, window, document);
