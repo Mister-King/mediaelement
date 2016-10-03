@@ -963,7 +963,7 @@
 			const t = this;
 
 			if (t.controls) {
-				t.controls.hide();
+				t.disableControls();
 			}
 
 			// Tell user that the file cannot be played
