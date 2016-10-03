@@ -12,10 +12,7 @@
  * @params
  *  - exports - CommonJS, window ..
  */
-;(function (exports, undefined) {
-
-	"use strict";
-
+;(((exports, undefined) => {
 	if (typeof exports.ca === 'undefined') {
 		exports.ca = {
 			'mejs.ad-skip': "Salta publicitat",
@@ -38,5 +35,4 @@
 			'mejs.stop': 'Aturar'
 		};
 	}
-
-}(mejs.i18n.locale.strings));
+})(mejs.i18n.locale.strings));
