@@ -372,23 +372,21 @@
 			const width = mediaElement.originalNode.width;
 			const videoId = YouTubeApi.getYouTubeId(mediaFiles[0].src);
 
-			const defaultVars = {
-				controls: 0,
-				rel: 0,
-				disablekb: 1,
-				showinfo: 0,
-				modestbranding: 0,
-				html5: 1,
-				playsinline: 1
-			};
-
 			const youtubeSettings = {
 				id: youtube.id,
 				containerId: youtubeContainer.id,
 				videoId,
 				height,
 				width,
-				playerVars: mejs.Utility.extend({}, defaultVars, youtube.options.youTubeVars),
+				playerVars: {
+					controls: 0,
+					rel: 0,
+					disablekb: 1,
+					showinfo: 0,
+					modestbranding: 0,
+					html5: 1,
+					playsinline: 1
+				},
 				origin: location.host,
 				events: {
 					onReady(e) {
