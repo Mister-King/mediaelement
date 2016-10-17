@@ -53,7 +53,7 @@
 
 				console.log('create JSMAD', filename);
 
-				new Mad.Player.fromURL(filename, player => {
+				new Mad.Player.fromURL( filename, player => {
 					//self.usePlayer( player );
 
 					console.log('JS MAD', 'loaded player', player);
@@ -79,7 +79,7 @@
 					mediaElement.dispatchEvent('ready');
 
 					// do call stack
-					for (let i = 0, il = t.apiStack.length; i < il; i++) {
+					for (let i=0, il=t.apiStack.length; i<il; i++) {
 
 						const stackItem = t.apiStack[i];
 
@@ -97,102 +97,104 @@
 
 			// wrappers for get/set
 			const props = mejs.html5media.properties;
-			for (i = 0, il = props.length; i < il; i++) {
 
-				// wrap in function to retain scope
-				((propName => {
+			const assignGettersSetters = propName => {
 
-					const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
+				const capName = propName.substring(0,1).toUpperCase() + propName.substring(1);
 
-					jsmad[`get${capName}`] = () => {
+				jsmad[`get${capName}`] = () => {
 
-						let value = null;
+					let value = null;
 
-						if (jsmad.jsMad != null) {
-							switch (propName) {
-								case 'paused':
-									value = !jsmad.jsMad.playing;
-									break;
-								case 'currentTime':
-									value = jsmad.jsMad.currentTime;
-									break;
-								case 'duration':
-									value = jsmad.jsMad.duration;
-									break;
-								default:
-									break;
-							}
-
+					if (jsmad.jsMad !== null) {
+						switch (propName) {
+							case 'paused':
+								value = !jsmad.jsMad.playing;
+								break;
+							case 'currentTime':
+								value = jsmad.jsMad.currentTime;
+								break;
+							case 'duration':
+								value = jsmad.jsMad.duration;
+								break;
+							default:
+								break;
 						}
 
-						console.log(`[JSMAD get]: ${propName}`, jsmad.jsMad, value);
+					}
 
-						return value;
-					};
+					console.log(`[JSMAD get]: ${propName}`, jsmad.jsMad, value);
 
-					jsmad[`set${capName}`] = value => {
+					return value;
+				};
 
-						console.log(`[JSMAD set]: ${propName} = ${value}`);
+				jsmad[`set${capName}`] = value => {
 
-						if (propName === 'src') {
+					console.log(`[JSMAD set]: ${propName} = ${value}`);
 
-							jsmad.loadSrc(value);
+					if (propName === 'src') {
 
+						jsmad.loadSrc(value);
+
+					} else {
+
+						if (t.jsMad !== null) {
+							// do stuff here
+							console.log('JSMAD TODO', 'SET', propName);
 						} else {
-
-							if (t.jsMad !== null) {
-								// do stuff here
-								console.log('JSMAD TODO', 'SET', propName);
-							} else {
-								jsmad.apiStack.push({type: 'set', propName, value});
-							}
+							jsmad.apiStack.push({type: 'set', propName, value});
 						}
-					};
+					}
+				};
 
-				}))(props[i]);
+			};
+
+			for (i=0, il=props.length; i<il; i++) {
+				assignGettersSetters(props[i]);
 			}
 
 			// add wrappers for native methods
 			const methods = mejs.html5media.methods;
-			for (i = 0, il = methods.length; i < il; i++) {
-				((methodName => {
 
-					// run the method on the native HTMLMediaElement
-					jsmad[methodName] = () => {
+			const assignMethods = methodName => {
 
-						console.log(`[JSMAD ${methodName}()]`, jsmad.jsMad);
+				// run the method on the native HTMLMediaElement
+				jsmad[methodName] = () => {
 
-						if (jsmad.jsMad != null) {
+					console.log(`[JSMAD ${methodName}()]`, jsmad.jsMad);
 
-							switch (methodName) {
-								case 'play':
-									console.log('[JSMAD setPlaying(true)', jsmad.jsMad);
+					if (jsmad.jsMad !== null) {
 
-									jsmad.jsMad.setPlaying(true);
-									break;
-								case 'pause':
-									jsmad.jsMad.setPlaying(false);
-									break;
+						switch (methodName) {
+							case 'play':
+								console.log('[JSMAD setPlaying(true)', jsmad.jsMad);
 
-								default:
-								case 'load':
+								jsmad.jsMad.setPlaying(true);
+								break;
+							case 'pause':
+								jsmad.jsMad.setPlaying(false);
+								break;
 
-									break;
-							}
-						} else {
+							default:
+							case 'load':
 
-							jsmad.apiStack.push({type: 'call', methodName});
+								break;
 						}
+					} else {
 
-					};
+						jsmad.apiStack.push({type: 'call', methodName});
+					}
 
-				}))(methods[i]);
+				};
+
+			};
+
+			for (i=0, il=methods.length; i<il; i++) {
+				assignMethods(methods[i]);
 			}
 
-			jsmad.show = () => {
-			};
-			jsmad.hide = () => {
-			};
+			jsmad.show = () => {};
+			jsmad.hide = () => {};
 
 			if (mediaFiles && mediaFiles.length > 0) {
 				jsmad.loadSrc(mediaFiles[0].src);

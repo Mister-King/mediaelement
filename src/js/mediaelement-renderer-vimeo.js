@@ -71,7 +71,7 @@
 
 				// Attach handlers for all browsers
 				script.onload = script.onreadystatechange = function () {
-					if (!done && (!this.readyState || typeof this.readyState === 'undefined' ||
+					if (!done && (!this.readyState || this.readyState === undefined ||
 						this.readyState === "loaded" || this.readyState === "complete")) {
 						done = true;
 						vimeoApi.iFrameReady();
@@ -117,7 +117,7 @@
 		 * @return {int}
 		 */
 		getVimeoId(url) {
-			if (url == undefined || url == null) {
+			if (url === undefined || url === null) {
 				return null;
 			}
 
@@ -172,7 +172,7 @@
 	 * Register Vimeo event globally
 	 *
 	 */
-	win['onVimeoPlayerAPIReady'] = () => {
+	win.onVimeoPlayerAPIReady = () => {
 		console.log('onVimeoPlayerAPIReady');
 		vimeoApi.iFrameReady();
 	};
@@ -211,7 +211,8 @@
 			const vimeo = {};
 			let vimeoPlayer = null;
 			let paused = true;
-			const volume = 0;
+			let volume = 1;
+			let oldVolume = volume;
 			let currentTime = 0;
 			let bufferedTime = 0;
 			let ended = false;
@@ -226,137 +227,173 @@
 
 			// wrappers for get/set
 			const props = mejs.html5media.properties;
-			for (i = 0, il = props.length; i < il; i++) {
 
-				// wrap in function to retain scope
-				((propName => {
+			const assignGettersSetters = propName => {
 
-					const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
+				const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
 
-					vimeo[`get${capName}`] = () => {
-						if (vimeoPlayer !== null) {
-							const value = null;
+				vimeo[`get${capName}`] = () => {
+					if (vimeoPlayer !== null) {
+						const value = null;
 
-							switch (propName) {
-								case 'currentTime':
-									return currentTime;
+						switch (propName) {
+							case 'currentTime':
+								return currentTime;
 
-								case 'duration':
-									return duration;
+							case 'duration':
+								return duration;
 
-								case 'volume':
-									return volume;
+							case 'volume':
+								return volume;
+							case 'muted':
+								return volume === 0;
+							case 'paused':
+								return paused;
 
-								case 'paused':
-									return paused;
+							case 'ended':
+								return ended;
 
-								case 'ended':
-									return ended;
+							case 'src':
+								return url;
 
-								case 'src':
-									return url;
-
-								case 'buffered':
-									return {
-										start() {
-											return 0;
-										},
-										end() {
-											return bufferedTime * duration;
-										},
-										length: 1
-									};
-							}
-
-							return value;
-						} else {
-							return null;
+							case 'buffered':
+								return {
+									start() {
+										return 0;
+									},
+									end() {
+										return bufferedTime * duration;
+									},
+									length: 1
+								};
 						}
-					};
 
-					vimeo[`set${capName}`] = value => {
-
-						if (vimeoPlayer !== null) {
-
-							// do something
-							switch (propName) {
-
-								case 'src':
-									const url = typeof value === 'string' ? value : value[0].src;
-									const videoId = vimeoApi.getVimeoId(url);
-
-									vimeoPlayer.loadVideo(videoId).then(() => {
-										if (mediaElement.getAttribute('autoplay')) {
-											vimeoPlayer.play();
-										}
-
-									})['catch'](error => {
-										vimeoApi.errorHandler(error);
-									});
-									break;
-
-								case 'currentTime':
-									vimeoPlayer.setCurrentTime(value).then(() => {
-										currentTime = value;
-										mediaElement.dispatchEvent({type: 'timeupdate'});
-									})['catch'](error => {
-										vimeoApi.errorHandler(error);
-									});
-									break;
-
-								case 'volume':
-									vimeoPlayer.setVolume(value).then(() => {
-										mediaElement.dispatchEvent({type: 'volumechange'});
-									})['catch'](error => {
-										vimeoApi.errorHandler(error);
-									});
-									break;
-
-								case 'loop':
-									vimeoPlayer.setLoop(value)['catch'](error => {
-										vimeoApi.errorHandler(error);
-									});
-									break;
-								default:
-									console.log(`vimeo ${id}`, propName, 'UNSUPPORTED property');
-							}
-
-						} else {
-							// store for after "READY" event fires
-							apiStack.push({type: 'set', propName, value});
-						}
+						return value;
+					} else {
+						return null;
 					}
+				};
 
-				}))(props[i]);
+				vimeo[`set${capName}`] = value => {
+
+					if (vimeoPlayer !== null) {
+
+						// do something
+						switch (propName) {
+
+							case 'src':
+								const url = typeof value === 'string' ? value : value[0].src, videoId = vimeoApi.getVimeoId(url);
+
+								vimeoPlayer.loadVideo(videoId).then(() => {
+									if (mediaElement.getAttribute('autoplay')) {
+										vimeoPlayer.play();
+									}
+
+								})['catch'](error => {
+									vimeoApi.errorHandler(error);
+								});
+								break;
+
+							case 'currentTime':
+								vimeoPlayer.setCurrentTime(value).then(() => {
+									currentTime = value;
+									setTimeout(() => {
+										const event = mejs.Utils.createEvent('timeupdate', vimeo);
+										mediaElement.dispatchEvent(event);
+									}, 50);
+								})['catch'](error => {
+									vimeoApi.errorHandler(error);
+								});
+								break;
+
+							case 'volume':
+								vimeoPlayer.setVolume(value).then(() => {
+									volume = value;
+									oldVolume = volume;
+									setTimeout(() => {
+										const event = mejs.Utils.createEvent('volumechange', vimeo);
+										mediaElement.dispatchEvent(event);
+									}, 50);
+								})['catch'](error => {
+									vimeoApi.errorHandler(error);
+								});
+								break;
+
+							case 'loop':
+								vimeoPlayer.setLoop(value)['catch'](error => {
+									vimeoApi.errorHandler(error);
+								});
+								break;
+							case 'muted':
+								console.log(value);
+								if (value) {
+									vimeoPlayer.setVolume(0).then(() => {
+										volume = 0;
+										setTimeout(() => {
+											const event = mejs.Utils.createEvent('volumechange', vimeo);
+											mediaElement.dispatchEvent(event);
+										}, 50);
+									})['catch'](error => {
+										vimeoApi.errorHandler(error);
+									});
+								} else {
+									vimeoPlayer.setVolume(oldVolume).then(() => {
+										volume = oldVolume;
+										setTimeout(() => {
+											const event = mejs.Utils.createEvent('volumechange', vimeo);
+											mediaElement.dispatchEvent(event);
+										}, 50);
+									})['catch'](error => {
+										vimeoApi.errorHandler(error);
+									});
+								}
+								break;
+							default:
+								console.log(`vimeo ${vimeo.id}`, propName, 'UNSUPPORTED property');
+						}
+
+					} else {
+						// store for after "READY" event fires
+						apiStack.push({type: 'set', propName, value});
+					}
+				};
+
+			};
+
+			for (i = 0, il = props.length; i < il; i++) {
+				assignGettersSetters(props[i]);
 			}
 
 			// add wrappers for native methods
 			const methods = mejs.html5media.methods;
-			for (i = 0, il = methods.length; i < il; i++) {
-				((methodName => {
 
-					// run the method on the Soundcloud API
-					vimeo[methodName] = () => {
+			const assignMethods = methodName => {
 
-						if (vimeoPlayer !== null) {
+				// run the method on the Soundcloud API
+				vimeo[methodName] = () => {
 
-							// DO method
-							switch (methodName) {
-								case 'play':
-									return vimeoPlayer.play();
-								case 'pause':
-									return vimeoPlayer.pause();
-								case 'load':
-									return null;
+					if (vimeoPlayer !== null) {
 
-							}
+						// DO method
+						switch (methodName) {
+							case 'play':
+								return vimeoPlayer.play();
+							case 'pause':
+								return vimeoPlayer.pause();
+							case 'load':
+								return null;
 
-						} else {
-							apiStack.push({type: 'call', methodName});
 						}
-					};
 
-				}))(methods[i]);
+					} else {
+						apiStack.push({type: 'call', methodName});
+					}
+				};
+
+			};
+
+			for (i = 0, il = methods.length; i < il; i++) {
+				assignMethods(methods[i]);
 			}
 
 			// Initial method to register all Vimeo events when initializing <iframe>
@@ -386,12 +423,15 @@
 
 				// a few more events
 				events = ['mouseover', 'mouseout'];
+
+				const assignEvents = e => {
+					const event = mejs.Utils.createEvent(e.type, vimeo);
+					mediaElement.dispatchEvent(event);
+				};
+
 				for (const j in events) {
 					const eventName = events[j];
-					mejs.addEvent(vimeoIframe, eventName, e => {
-						const event = mejs.Utils.createEvent(e.type, vimeo);
-						mediaElement.dispatchEvent(event);
-					});
+					mejs.addEvent(vimeoIframe, eventName, assignEvents);
 				}
 
 				// Vimeo events
@@ -523,6 +563,10 @@
 				if (vimeoPlayer) {
 					vimeoContainer.style.display = 'none';
 				}
+			};
+			vimeo.setSize = (width, height) => {
+				vimeoContainer.setAttribute('width', width);
+				vimeoContainer.setAttribute('height', height);
 			};
 			vimeo.show = () => {
 				if (vimeoPlayer) {

@@ -26,7 +26,7 @@
 
 		options: {
 			prefix: 'facebook',
-			fbVars: {
+			facebook: {
 				appId: '{your-app-id}',
 				xfbml: true,
 				version: 'v2.6'
@@ -71,139 +71,143 @@
 
 			// wrappers for get/set
 			const props = mejs.html5media.properties;
-			for (i = 0, il = props.length; i < il; i++) {
 
-				// wrap in function to retain scope
-				((propName => {
+			const assignGettersSetters = propName => {
 
-					const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
+				const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
 
-					fbWrapper[`get${capName}`] = () => {
+				fbWrapper[`get${capName}`] = () => {
 
-						if (fbApi !== null) {
-							const value = null;
+					if (fbApi !== null) {
+						const value = null;
 
-							// figure out how to get youtube dta here
-							switch (propName) {
-								case 'currentTime':
-									return fbApi.getCurrentPosition();
+						// figure out how to get youtube dta here
+						switch (propName) {
+							case 'currentTime':
+								return fbApi.getCurrentPosition();
 
-								case 'duration':
-									return fbApi.getDuration();
+							case 'duration':
+								return fbApi.getDuration();
 
-								case 'volume':
-									return fbApi.getVolume();
+							case 'volume':
+								return fbApi.getVolume();
 
-								case 'paused':
-									return paused;
+							case 'paused':
+								return paused;
 
-								case 'ended':
-									return ended;
+							case 'ended':
+								return ended;
 
-								case 'muted':
-									return fbApi.isMuted();
+							case 'muted':
+								return fbApi.isMuted();
 
-								case 'buffered':
-									return {
-										start() {
-											return 0;
-										},
-										end() {
-											return 0;
-										},
-										length: 1
-									};
-								case 'src':
-									return src;
-							}
-
-							return value;
-						} else {
-							return null;
+							case 'buffered':
+								return {
+									start() {
+										return 0;
+									},
+									end() {
+										return 0;
+									},
+									length: 1
+								};
+							case 'src':
+								return src;
 						}
-					};
 
-					fbWrapper[`set${capName}`] = value => {
-
-						if (fbApi !== null) {
-
-							switch (propName) {
-
-								case 'src':
-									const url = typeof value === 'string' ? value : value[0].src;
-
-									// Only way is to destroy instance and all the events fired,
-									// and create new one
-									fbDiv.parentNode.removeChild(fbDiv);
-									createFacebookEmbed(url, options.fbVars);
-
-									// This method reloads video on-demand
-									FB.XFBML.parse();
-
-									break;
-
-								case 'currentTime':
-									fbApi.seek(value);
-									break;
-
-								case 'muted':
-									if (value) {
-										fbApi.mute();
-									} else {
-										fbApi.unmute();
-									}
-									setTimeout(() => {
-										mediaElement.dispatchEvent({type: 'volumechange'});
-									}, 50);
-									break;
-
-								case 'volume':
-									fbApi.setVolume(value);
-									setTimeout(() => {
-										mediaElement.dispatchEvent({type: 'volumechange'});
-									}, 50);
-									break;
-
-								default:
-									console.log(`facebook ${id}`, propName, 'UNSUPPORTED property');
-							}
-
-						} else {
-							// store for after "READY" event fires
-							apiStack.push({type: 'set', propName, value});
-						}
+						return value;
+					} else {
+						return null;
 					}
+				};
 
-				}))(props[i]);
+				fbWrapper[`set${capName}`] = value => {
+
+					if (fbApi !== null) {
+
+						switch (propName) {
+
+							case 'src':
+								const url = typeof value === 'string' ? value : value[0].src;
+
+								// Only way is to destroy instance and all the events fired,
+								// and create new one
+								fbDiv.parentNode.removeChild(fbDiv);
+								createFacebookEmbed(url, options.facebook);
+
+								// This method reloads video on-demand
+								FB.XFBML.parse();
+
+								break;
+
+							case 'currentTime':
+								fbApi.seek(value);
+								break;
+
+							case 'muted':
+								if (value) {
+									fbApi.mute();
+								} else {
+									fbApi.unmute();
+								}
+								setTimeout(() => {
+									mediaElement.dispatchEvent({type: 'volumechange'});
+								}, 50);
+								break;
+
+							case 'volume':
+								fbApi.setVolume(value);
+								setTimeout(() => {
+									mediaElement.dispatchEvent({type: 'volumechange'});
+								}, 50);
+								break;
+
+							default:
+								console.log(`facebook ${id}`, propName, 'UNSUPPORTED property');
+						}
+
+					} else {
+						// store for after "READY" event fires
+						apiStack.push({type: 'set', propName, value});
+					}
+				};
+
+			};
+
+			for (i = 0, il = props.length; i < il; i++) {
+				assignGettersSetters(props[i]);
 			}
 
 			// add wrappers for native methods
 			const methods = mejs.html5media.methods;
-			for (i = 0, il = methods.length; i < il; i++) {
-				((methodName => {
 
-					// run the method on the native HTMLMediaElement
-					fbWrapper[methodName] = () => {
+			const assignMethods = methodName => {
 
-						if (fbApi !== null) {
+				// run the method on the native HTMLMediaElement
+				fbWrapper[methodName] = () => {
 
-							// DO method
-							switch (methodName) {
-								case 'play':
-									return fbApi.play();
-								case 'pause':
-									return fbApi.pause();
-								case 'load':
-									return null;
+					if (fbApi !== null) {
 
-							}
+						// DO method
+						switch (methodName) {
+							case 'play':
+								return fbApi.play();
+							case 'pause':
+								return fbApi.pause();
+							case 'load':
+								return null;
 
-						} else {
-							apiStack.push({type: 'call', methodName});
 						}
-					};
 
-				}))(methods[i]);
+					} else {
+						apiStack.push({type: 'call', methodName});
+					}
+				};
+
+			};
+
+			for (i = 0, il = methods.length; i < il; i++) {
+				assignMethods(methods[i]);
 			}
 
 
@@ -263,7 +267,7 @@
 				 * Register Facebook API event globally
 				 *
 				 */
-				win['fbAsyncInit'] = () => {
+				win.fbAsyncInit = () => {
 
 					FB.init(config);
 
@@ -351,7 +355,7 @@
 			}
 
 			if (mediaFiles.length > 0) {
-				createFacebookEmbed(mediaFiles[0].src, options.fbVars);
+				createFacebookEmbed(mediaFiles[0].src, options.facebook);
 			}
 
 			fbWrapper.hide = () => {
@@ -366,8 +370,10 @@
 					fbDiv.style.display = '';
 				}
 			};
+			fbWrapper.setSize = (width, height) => {
+				// Buggy and difficult to resize on-the-fly
+			};
 			fbWrapper.destroy = () => {
-				//youTubeApi.destroy();
 			};
 			fbWrapper.interval = null;
 

@@ -251,13 +251,13 @@
 	 * @return {HTMLElement[]}
 	 */
 	mejs.getElementsByClassName = function getElementsByClassName(className, node, tag) {
-		if (node == null) {
+		if (node === undefined || node === null) {
 			node = document;
 		}
-		if (node.getElementsByClassName != null) {
+		if (node.getElementsByClassName !== undefined && node.getElementsByClassName !== null) {
 			return node.getElementsByClassName(className);
 		}
-		if (tag == null) {
+		if (tag === undefined || tag === null) {
 			tag = '*';
 		}
 
@@ -311,7 +311,7 @@
 
 
 		// try to get options from data-mejsoptions
-		if (typeof o === 'undefined') {
+		if (o === undefined) {
 			o = t.$node.data('mejsoptions');
 		}
 
@@ -418,8 +418,16 @@
 							// if user clicks on the Play/Pause button in the control bar once it attempts
 							// to hide it
 							if (!t.hasMsNativeFullScreen) {
-								const playButton = t.container.find('.mejs-playpause-button > button');
-								playButton.focus();
+								// If e.relatedTarget appears before container, send focus to play button,
+								// else send focus to last control button.
+								let btnSelector = '.mejs-playpause-button > button';
+
+								if (mejs.Utility.isNodeAfter(e.relatedTarget, t.container[0])) {
+									btnSelector = '.mejs-controls .mejs-button:last-child > button';
+								}
+
+								const button = t.container.find(btnSelector);
+								button.focus();
 							}
 						}
 					});
@@ -515,7 +523,7 @@
 		showControls(doAnimation) {
 			const t = this;
 
-			doAnimation = typeof doAnimation === 'undefined' || doAnimation;
+			doAnimation = doAnimation === undefined || doAnimation;
 
 			if (t.controlsAreVisible)
 				return;
@@ -556,7 +564,7 @@
 		hideControls(doAnimation) {
 			const t = this;
 
-			doAnimation = typeof doAnimation === 'undefined' || doAnimation;
+			doAnimation = doAnimation === undefined || doAnimation;
 
 			if (!t.controlsAreVisible || t.options.alwaysShowControls || t.keyboardAction || t.media.paused || t.media.ended)
 				return;
@@ -646,7 +654,7 @@
 			const t = this;
 			const mf = mejs.MediaFeatures;
 			const autoplayAttr = domNode.getAttribute('autoplay');
-			const autoplay = !(typeof autoplayAttr === 'undefined' || autoplayAttr == null || autoplayAttr === 'false');
+			const autoplay = !(autoplayAttr === undefined || autoplayAttr === null || autoplayAttr === 'false');
 			let featureIndex;
 			let feature;
 			const isNative = t.media.id.match(/(native|html5)/);
@@ -1018,7 +1026,7 @@
 			const t = this;
 
 			// detect 100% mode - use currentStyle for IE since css() doesn't return percentages
-			return (t.height.toString().indexOf('%') > 0 || (t.$node.css('max-width') !== 'none' && t.$node.css('max-width') !== 't.width') || (t.$node[0].currentStyle && t.$node[0].currentStyle.maxWidth === '100%'));
+			return (t.height.toString().includes('%') || (t.$node.css('max-width') !== 'none' && t.$node.css('max-width') !== t.width) || (t.$node[0].currentStyle && t.$node[0].currentStyle.maxWidth === '100%'));
 		},
 
 		setResponsiveMode() {
@@ -1117,6 +1125,30 @@
 			const t = this;
 			const parent = t.outerContainer;
 
+			// Remove the responsive attributes in the event they are there
+			if (t.$node.css('height') !== 'none' && t.$node.css('height') !== t.height) {
+				t.$node.css('height', '');
+			}
+			if (t.$node.css('max-width') !== 'none' && t.$node.css('max-width') !== t.width) {
+				t.$node.css('max-width', '');
+			}
+
+			if (t.$node.css('max-height') !== 'none' && t.$node.css('max-height') !== t.height) {
+				t.$node.css('max-height', '');
+			}
+
+			if (t.$node[0].currentStyle) {
+				if (t.$node[0].currentStyle.height === '100%') {
+					t.$node[0].currentStyle.height = '';
+				}
+				if (t.$node[0].currentStyle.maxWidth === '100%') {
+					t.$node[0].currentStyle.maxWidth = '';
+				}
+				if (t.$node[0].currentStyle.maxHeight === '100%') {
+					t.$node[0].currentStyle.maxHeight = '';
+				}
+			}
+
 			if (!parent.width()) {
 				parent.height(t.$media.width());
 			}
@@ -1151,7 +1183,7 @@
 			const scaleY2 = parentHeight;
 
 			const // now figure out which one we should use
-				bScaleOnWidth = !(scaleX2 > parentWidth);
+				bScaleOnWidth = scaleX2 > parentWidth === false;
 
 			const finalWidth = bScaleOnWidth ? Math.floor(scaleX1) : Math.floor(scaleX2);
 			const finalHeight = bScaleOnWidth ? Math.floor(scaleY1) : Math.floor(scaleY2);
@@ -1427,8 +1459,8 @@
 
 			// listen for key presses
 			t.globalBind('keydown', event => {
-				player.hasFocus = $(event.target).closest('.mejs-container').length !== 0
-					&& $(event.target).closest('.mejs-container').attr('id') === player.$media.closest('.mejs-container').attr('id');
+				player.hasFocus = $(event.target).closest('.mejs-container').length !== 0 &&
+					$(event.target).closest('.mejs-container').attr('id') === player.$media.closest('.mejs-container').attr('id');
 				return t.onkeydown(player, media, event);
 			});
 

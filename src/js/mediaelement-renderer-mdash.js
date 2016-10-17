@@ -61,7 +61,7 @@
 
 				// Attach handlers for all browsers
 				script.onload = script.onreadystatechange = function () {
-					if (!done && (!this.readyState || typeof this.readyState === 'undefined' ||
+					if (!done && (!this.readyState || this.readyState === undefined ||
 						this.readyState === 'loaded' || this.readyState === 'complete')) {
 						done = true;
 						NativeDash.mediaReady();
@@ -140,39 +140,40 @@
 
 			// WRAPPERS for PROPs
 			const props = mejs.html5media.properties;
-			for (i = 0, il = props.length; i < il; i++) {
 
-				// wrap in function to retain scope
-				((propName => {
-					const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
+			const assignGettersSetters = propName => {
+				const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
 
-					node[`get${capName}`] = () => {
-						if (dashPlayer !== null) {
-							return node[propName];
-						} else {
-							return null;
-						}
-					};
+				node[`get${capName}`] = () => {
+					if (dashPlayer !== null) {
+						return node[propName];
+					} else {
+						return null;
+					}
+				};
 
-					node[`set${capName}`] = value => {
-						if (dashPlayer !== null) {
-							if (propName === 'src') {
+				node[`set${capName}`] = value => {
+					if (dashPlayer !== null) {
+						if (propName === 'src') {
 
-								dashPlayer.attachSource(value);
+							dashPlayer.attachSource(value);
 
-								if (node.getAttribute('autoplay')) {
-									node.play();
-								}
+							if (node.getAttribute('autoplay')) {
+								node.play();
 							}
-
-							node[propName] = value;
-						} else {
-							// store for after "READY" event fires
-							stack.push({type: 'set', propName, value});
 						}
-					};
 
-				}))(props[i]);
+						node[propName] = value;
+					} else {
+						// store for after "READY" event fires
+						stack.push({type: 'set', propName, value});
+					}
+				};
+
+			};
+
+			for (i = 0, il = props.length; i < il; i++) {
+				assignGettersSetters(props[i]);
 			}
 
 			// Initial method to register all M-Dash events
@@ -205,27 +206,29 @@
 
 				const dashEvents = dashjs.MediaPlayer.events;
 
+				const assignEvents = eventName => {
+
+					if (eventName === 'loadedmetadata') {
+						dashPlayer.initialize(node, node.src, false);
+					}
+
+					node.addEventListener(eventName, e => {
+						// copy event
+
+						const event = doc.createEvent('HTMLEvents');
+						event.initEvent(e.type, e.bubbles, e.cancelable);
+						event.srcElement = e.srcElement;
+						event.target = e.srcElement;
+
+						mediaElement.dispatchEvent(event);
+					});
+
+				};
+
 				events = events.concat(['click', 'mouseover', 'mouseout']);
 
 				for (i = 0, il = events.length; i < il; i++) {
-					((eventName => {
-
-						if (eventName === 'loadedmetadata') {
-							dashPlayer.initialize(node, node.src, false);
-						}
-
-						node.addEventListener(eventName, e => {
-							// copy event
-
-							const event = doc.createEvent('HTMLEvents');
-							event.initEvent(e.type, e.bubbles, e.cancelable);
-							event.srcElement = e.srcElement;
-							event.target = e.srcElement;
-
-							mediaElement.dispatchEvent(event);
-						});
-
-					}))(events[i]);
+					assignEvents(events[i]);
 				}
 
 				/**
@@ -235,17 +238,17 @@
 				 * not using dashjs.MediaPlayer.events object
 				 * @see http://cdn.dashjs.org/latest/jsdoc/MediaPlayerEvents.html
 				 */
+				const assignMdashEvents = (e, data) => {
+					const event = mejs.Utils.createEvent(e, node);
+					mediaElement.dispatchEvent(event);
+
+					if (e === 'error') {
+						console.error(e, data);
+					}
+				};
 				for (const eventType in dashEvents) {
-
 					if (dashEvents.hasOwnProperty(eventType)) {
-						dashPlayer.on(dashEvents[eventType], (e, data) => {
-							const event = mejs.Utils.createEvent(e, node);
-							mediaElement.dispatchEvent(event);
-
-							if (e === 'error') {
-								console.error(e, data);
-							}
-						});
+						dashPlayer.on(dashEvents[eventType], assignMdashEvents);
 					}
 				}
 			};

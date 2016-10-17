@@ -30,18 +30,16 @@
 		 */
 		buildskipback(player, controls, layers, media) {
 			const t = this;
-			const skipTitle = t.options.skipBackText ? t.options.skipBackText : mejs.i18n.t('mejs.time-skip-back');
-
-			const // Replace %1 with skip back interval
-				backText = skipTitle.replace('%1', t.options.skipBackInterval);
+			const defaultTitle = mejs.i18n.t('mejs.time-skip-back', t.options.skipBackInterval);
+			const skipTitle = t.options.skipBackText ? t.options.skipBackText.replace('%1', t.options.skipBackInterval) : defaultTitle;
 
 			const // create the loop button
 				loop =
-					$(`<div class="mejs-button mejs-skip-back-button"><button type="button" aria-controls="${t.id}" title="${backText}" aria-label="${backText}">${t.options.skipBackInterval}</button></div>`)
+					$(`<div class="mejs-button mejs-skip-back-button"><button type="button" aria-controls="${t.id}" title="${skipTitle}" aria-label="${skipTitle}">${t.options.skipBackInterval}</button></div>`)
 					// append it to the toolbar
 					.appendTo(controls)
 					// add a click toggle event
-					.click(function() {
+					.click(function () {
 						if (media.duration) {
 							media.setCurrentTime(Math.max(media.currentTime - t.options.skipBackInterval, 0));
 							$(this).find('button').blur();

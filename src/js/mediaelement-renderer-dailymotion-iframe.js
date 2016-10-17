@@ -134,7 +134,7 @@
 	 * Register DailyMotion event globally
 	 *
 	 */
-	win['dmAsyncInit'] = () => {
+	win.dmAsyncInit = () => {
 		console.log('dmAsyncInit');
 		DailyMotionApi.apiReady();
 	};
@@ -182,137 +182,142 @@
 
 			// wrappers for get/set
 			const props = mejs.html5media.properties;
-			for (i = 0, il = props.length; i < il; i++) {
 
-				// wrap in function to retain scope
-				((propName => {
+			const assignGettersSetters = propName => {
 
-					// add to flash state that we will store
+				// add to flash state that we will store
 
-					const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
+				const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
 
-					dm[`get${capName}`] = () => {
-						if (dmPlayer !== null) {
-							const value = null;
+				dm[`get${capName}`] = () => {
+					if (dmPlayer !== null) {
+						const value = null;
 
-							// figure out how to get dm dta here
-							switch (propName) {
-								case 'currentTime':
-									return dmPlayer.currentTime;
+						// figure out how to get dm dta here
+						switch (propName) {
+							case 'currentTime':
+								return dmPlayer.currentTime;
 
-								case 'duration':
-									return isNaN(dmPlayer.duration) ? 0 : dmPlayer.duration;
+							case 'duration':
+								return isNaN(dmPlayer.duration) ? 0 : dmPlayer.duration;
 
-								case 'volume':
-									return dmPlayer.volume;
+							case 'volume':
+								return dmPlayer.volume;
 
-								case 'paused':
-									return dmPlayer.paused;
+							case 'paused':
+								return dmPlayer.paused;
 
-								case 'ended':
-									return dmPlayer.ended;
+							case 'ended':
+								return dmPlayer.ended;
 
-								case 'muted':
-									return dmPlayer.muted;
+							case 'muted':
+								return dmPlayer.muted;
 
-								case 'buffered':
-									const percentLoaded = dmPlayer.bufferedTime;
-									const duration = dmPlayer.duration;
-									return {
-										start() {
-											return 0;
-										},
-										end() {
-											return percentLoaded / duration;
-										},
-										length: 1
-									};
-								case 'src':
-									return mediaElement.originalNode.getAttribute('src');
-							}
-
-							return value;
-						} else {
-							return null;
+							case 'buffered':
+								const percentLoaded = dmPlayer.bufferedTime, duration = dmPlayer.duration;
+								return {
+									start() {
+										return 0;
+									},
+									end() {
+										return percentLoaded / duration;
+									},
+									length: 1
+								};
+							case 'src':
+								return mediaElement.originalNode.getAttribute('src');
 						}
-					};
 
-					dm[`set${capName}`] = value => {
-						//console.log('[' + options.prefix + ' set]: ' + propName + ' = ' + value, t.flashApi);
-
-						if (dmPlayer !== null) {
-
-							switch (propName) {
-
-								case 'src':
-									const url = typeof value === 'string' ? value : value[0].src;
-
-									dmPlayer.load(DailyMotionApi.getDailyMotionId(url));
-									break;
-
-								case 'currentTime':
-									dmPlayer.seek(value);
-									break;
-
-								case 'muted':
-									if (value) {
-										dmPlayer.setMuted(true);
-									} else {
-										dmPlayer.setMuted(false);
-									}
-									setTimeout(() => {
-										mediaElement.dispatchEvent({type: 'volumechange'});
-									}, 50);
-									break;
-
-								case 'volume':
-									dmPlayer.setVolume(value);
-									setTimeout(() => {
-										mediaElement.dispatchEvent({type: 'volumechange'});
-									}, 50);
-									break;
-
-								default:
-									console.log(`dm ${id}`, propName, 'UNSUPPORTED property');
-							}
-
-						} else {
-							// store for after "READY" event fires
-							apiStack.push({type: 'set', propName, value});
-						}
+						return value;
+					} else {
+						return null;
 					}
+				};
 
-				}))(props[i]);
+				dm[`set${capName}`] = value => {
+					//console.log('[' + options.prefix + ' set]: ' + propName + ' = ' + value, t.flashApi);
+
+					if (dmPlayer !== null) {
+
+						switch (propName) {
+
+							case 'src':
+								const url = typeof value === 'string' ? value : value[0].src;
+
+								dmPlayer.load(DailyMotionApi.getDailyMotionId(url));
+								break;
+
+							case 'currentTime':
+								dmPlayer.seek(value);
+								break;
+
+							case 'muted':
+								if (value) {
+									dmPlayer.setMuted(true);
+								} else {
+									dmPlayer.setMuted(false);
+								}
+								setTimeout(() => {
+									const event = mejs.Utils.createEvent('volumechange', dm);
+									mediaElement.dispatchEvent(event);
+								}, 50);
+								break;
+
+							case 'volume':
+								dmPlayer.setVolume(value);
+								setTimeout(() => {
+									const event = mejs.Utils.createEvent('volumechange', dm);
+									mediaElement.dispatchEvent(event);
+								}, 50);
+								break;
+
+							default:
+								console.log(`dm ${dm.id}`, propName, 'UNSUPPORTED property');
+						}
+
+					} else {
+						// store for after "READY" event fires
+						apiStack.push({type: 'set', propName, value});
+					}
+				};
+
+			};
+
+			for (i = 0, il = props.length; i < il; i++) {
+				assignGettersSetters(props[i]);
 			}
 
 			// add wrappers for native methods
 			const methods = mejs.html5media.methods;
-			for (i = 0, il = methods.length; i < il; i++) {
-				((methodName => {
 
-					// run the method on the native HTMLMediaElement
-					dm[methodName] = () => {
-						console.log(`[${options.prefix} ${methodName}()]`);
+			const assignMethods = methodName => {
 
-						if (dmPlayer !== null) {
+				// run the method on the native HTMLMediaElement
+				dm[methodName] = () => {
+					console.log(`[${options.prefix} ${methodName}()]`);
 
-							// DO method
-							switch (methodName) {
-								case 'play':
-									return dmPlayer.play();
-								case 'pause':
-									return dmPlayer.pause();
-								case 'load':
-									return null;
+					if (dmPlayer !== null) {
 
-							}
+						// DO method
+						switch (methodName) {
+							case 'play':
+								return dmPlayer.play();
+							case 'pause':
+								return dmPlayer.pause();
+							case 'load':
+								return null;
 
-						} else {
-							apiStack.push({type: 'call', methodName});
 						}
-					};
 
-				}))(methods[i]);
+					} else {
+						apiStack.push({type: 'call', methodName});
+					}
+				};
+
+			};
+
+			for (i = 0, il = methods.length; i < il; i++) {
+				assignMethods(methods[i]);
 			}
 
 			// Initial method to register all DailyMotion events when initializing <iframe>
@@ -344,38 +349,40 @@
 
 				// a few more events
 				events = ['mouseover', 'mouseout'];
+				const assignEvent = e => {
+					const event = mejs.Utils.createEvent(e.type, dm);
+
+					mediaElement.dispatchEvent(event);
+				};
 				for (const j in events) {
 					const eventName = events[j];
-					mejs.addEvent(dmIframe, eventName, e => {
-						const event = mejs.Utils.createEvent(e.type, dm);
-
-						mediaElement.dispatchEvent(event);
-					});
+					mejs.addEvent(dmIframe, eventName, assignEvent);
 				}
 
 				// BUBBLE EVENTS up
 				events = mejs.html5media.events;
 				events = events.concat(['click', 'mouseover', 'mouseout']);
+				const assignNativeEvents = eventName => {
+
+					// Deprecated event; not consider it
+					if (eventName !== 'ended') {
+
+						dmPlayer.addEventListener(eventName, e => {
+							// copy event
+							const event = mejs.Utils.createEvent(e.type, dmPlayer);
+							mediaElement.dispatchEvent(event);
+						});
+					}
+
+				};
 
 				for (i = 0, il = events.length; i < il; i++) {
-					((eventName => {
-
-						// Deprecated event; not consider it
-						if (eventName !== 'ended') {
-
-							dmPlayer.addEventListener(eventName, e => {
-								// copy event
-								const event = mejs.Utils.createEvent(e.type, dmPlayer);
-								mediaElement.dispatchEvent(event);
-							});
-						}
-
-					}))(events[i]);
+					assignNativeEvents(events[i]);
 				}
 
 				// Custom DailyMotion events
 				dmPlayer.addEventListener('video_start', () => {
-					let event = mejs.Utils.createEvent('loadedmetadata', dmPlayer);
+					let event = mejs.Utils.createEvent('play', dmPlayer);
 					mediaElement.dispatchEvent(event);
 
 					event = mejs.Utils.createEvent('timeupdate', dmPlayer);
@@ -435,6 +442,10 @@
 				if (dmIframe) {
 					dmIframe.style.display = '';
 				}
+			};
+			dm.setSize = (width, height) => {
+				dmIframe.width = width;
+				dmIframe.height = height;
 			};
 			dm.destroy = () => {
 				dmPlayer.destroy();

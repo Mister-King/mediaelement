@@ -166,136 +166,142 @@
 
 			// wrappers for get/set
 			const props = mejs.html5media.properties;
+
+			const assignGettersSetters = propName => {
+
+				// add to flash state that we will store
+
+				const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
+
+				sc[`get${capName}`] = () => {
+					if (scPlayer !== null) {
+						const value = null;
+
+						// figure out how to get dm dta here
+						switch (propName) {
+							case 'currentTime':
+								return currentTime;
+
+							case 'duration':
+								return duration;
+
+							case 'volume':
+								return volume;
+
+							case 'paused':
+								return paused;
+
+							case 'ended':
+								return ended;
+
+							case 'muted':
+								return muted; // ?
+
+							case 'buffered':
+								return {
+									start() {
+										return 0;
+									},
+									end() {
+										return bufferedTime * duration;
+									},
+									length: 1
+								};
+							case 'src':
+								return (scIframe) ? scIframe.src : '';
+						}
+
+						return value;
+					} else {
+						return null;
+					}
+				};
+
+				sc[`set${capName}`] = value => {
+					//console.log('[' + options.prefix + ' set]: ' + propName + ' = ' + value, t.flashApi);
+
+					if (scPlayer !== null) {
+
+						// do something
+						switch (propName) {
+
+							case 'src':
+								const url = typeof value === 'string' ? value : value[0].src;
+
+								scPlayer.load(url);
+								break;
+
+							case 'currentTime':
+								scPlayer.seekTo(value * 1000);
+								break;
+
+							case 'muted':
+								if (value) {
+									scPlayer.setVolume(0); // ?
+								} else {
+									scPlayer.setVolume(1); // ?
+								}
+								setTimeout(() => {
+									const event = mejs.Utils.createEvent('volumechange', sc);
+									mediaElement.dispatchEvent(event);
+								}, 50);
+								break;
+
+							case 'volume':
+								scPlayer.setVolume(value);
+								setTimeout(() => {
+									const event = mejs.Utils.createEvent('volumechange', sc);
+									mediaElement.dispatchEvent(event);
+								}, 50);
+								break;
+
+							default:
+								console.log(`dm ${id}`, propName, 'UNSUPPORTED property');
+						}
+
+					} else {
+						// store for after "READY" event fires
+						apiStack.push({type: 'set', propName, value});
+					}
+				};
+
+			};
+
 			for (i = 0, il = props.length; i < il; i++) {
-
-				// wrap in function to retain scope
-				((propName => {
-
-					// add to flash state that we will store
-
-					const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
-
-					sc[`get${capName}`] = () => {
-						if (scPlayer !== null) {
-							const value = null;
-
-							// figure out how to get dm dta here
-							switch (propName) {
-								case 'currentTime':
-									return currentTime;
-
-								case 'duration':
-									return duration;
-
-								case 'volume':
-									return volume;
-
-								case 'paused':
-									return paused;
-
-								case 'ended':
-									return ended;
-
-								case 'muted':
-									return muted; // ?
-
-								case 'buffered':
-									return {
-										start() {
-											return 0;
-										},
-										end() {
-											return bufferedTime * duration;
-										},
-										length: 1
-									};
-								case 'src':
-									return (scIframe) ? scIframe.src : '';
-							}
-
-							return value;
-						} else {
-							return null;
-						}
-					};
-
-					sc[`set${capName}`] = value => {
-						//console.log('[' + options.prefix + ' set]: ' + propName + ' = ' + value, t.flashApi);
-
-						if (scPlayer !== null) {
-
-							// do something
-							switch (propName) {
-
-								case 'src':
-									const url = typeof value === 'string' ? value : value[0].src;
-
-									scPlayer.load(url);
-									break;
-
-								case 'currentTime':
-									scPlayer.seekTo(value * 1000);
-									break;
-
-								case 'muted':
-									if (value) {
-										scPlayer.setVolume(0); // ?
-									} else {
-										scPlayer.setVolume(1); // ?
-									}
-									setTimeout(() => {
-										mediaElement.dispatchEvent({type: 'volumechange'});
-									}, 50);
-									break;
-
-								case 'volume':
-									scPlayer.setVolume(value);
-									setTimeout(() => {
-										mediaElement.dispatchEvent({type: 'volumechange'});
-									}, 50);
-									break;
-
-								default:
-									console.log(`dm ${id}`, propName, 'UNSUPPORTED property');
-							}
-
-						} else {
-							// store for after "READY" event fires
-							apiStack.push({type: 'set', propName, value});
-						}
-					};
-
-				}))(props[i]);
+				assignGettersSetters(props[i]);
 			}
 
 			// add wrappers for native methods
 			const methods = mejs.html5media.methods;
-			for (i = 0, il = methods.length; i < il; i++) {
-				((methodName => {
 
-					// run the method on the Soundcloud API
-					sc[methodName] = () => {
-						console.log(`[${options.prefix} ${methodName}()]`);
+			const assignMethods = methodName => {
 
-						if (scPlayer !== null) {
+				// run the method on the Soundcloud API
+				sc[methodName] = () => {
+					console.log(`[${options.prefix} ${methodName}()]`);
 
-							// DO method
-							switch (methodName) {
-								case 'play':
-									return scPlayer.play();
-								case 'pause':
-									return scPlayer.pause();
-								case 'load':
-									return null;
+					if (scPlayer !== null) {
 
-							}
+						// DO method
+						switch (methodName) {
+							case 'play':
+								return scPlayer.play();
+							case 'pause':
+								return scPlayer.pause();
+							case 'load':
+								return null;
 
-						} else {
-							apiStack.push({type: 'call', methodName});
 						}
-					};
 
-				}))(methods[i]);
+					} else {
+						apiStack.push({type: 'call', methodName});
+					}
+				};
+
+			};
+
+			for (i = 0, il = methods.length; i < il; i++) {
+				assignMethods(methods[i]);
 			}
 
 			// add a ready method that SC can fire

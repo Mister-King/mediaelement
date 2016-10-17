@@ -153,7 +153,7 @@
 		 */
 		getYouTubeIdFromUrl(url) {
 
-			if (url == undefined || url == null) {
+			if (url === undefined || url === null) {
 				return null;
 			}
 
@@ -169,7 +169,7 @@
 	 * Register YouTube API event globally
 	 *
 	 */
-	win['onYouTubePlayerAPIReady'] = () => {
+	win.onYouTubePlayerAPIReady = () => {
 		console.log('onYouTubePlayerAPIReady');
 		YouTubeApi.iFrameReady();
 	};
@@ -220,146 +220,149 @@
 
 			// wrappers for get/set
 			const props = mejs.html5media.properties;
-			for (i = 0, il = props.length; i < il; i++) {
 
-				// wrap in function to retain scope
-				((propName => {
+			const assignGettersSetters = propName => {
 
-					// add to flash state that we will store
+				// add to flash state that we will store
 
-					const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
+				const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
 
-					youtube[`get${capName}`] = () => {
-						if (youTubeApi !== null) {
-							const value = null;
+				youtube[`get${capName}`] = () => {
+					if (youTubeApi !== null) {
+						const value = null;
 
-							// figure out how to get youtube dta here
-							switch (propName) {
-								case 'currentTime':
-									return youTubeApi.getCurrentTime();
+						// figure out how to get youtube dta here
+						switch (propName) {
+							case 'currentTime':
+								return youTubeApi.getCurrentTime();
 
-								case 'duration':
-									return youTubeApi.getDuration();
+							case 'duration':
+								return youTubeApi.getDuration();
 
-								case 'volume':
-									return youTubeApi.getVolume();
+							case 'volume':
+								return youTubeApi.getVolume();
 
-								case 'paused':
-									console.log('YT paused', youTubeState);
+							case 'paused':
+								console.log('YT paused', youTubeState);
 
-									return paused;
+								return paused;
 
-								case 'ended':
-									return ended;
+							case 'ended':
+								return ended;
 
-								case 'muted':
-									return youTubeApi.isMuted(); // ?
+							case 'muted':
+								return youTubeApi.isMuted(); // ?
 
-								case 'buffered':
-									const percentLoaded = youTubeApi.getVideoLoadedFraction();
-									const duration = youTubeApi.getDuration();
-									return {
-										start() {
-											return 0;
-										},
-										end() {
-											return percentLoaded * duration;
-										},
-										length: 1
-									};
-								case 'src':
-									return youTubeApi.getVideoUrl();
-							}
-
-							return value;
-						} else {
-							return null;
+							case 'buffered':
+								const percentLoaded = youTubeApi.getVideoLoadedFraction(), duration = youTubeApi.getDuration();
+								return {
+									start() {
+										return 0;
+									},
+									end() {
+										return percentLoaded * duration;
+									},
+									length: 1
+								};
+							case 'src':
+								return youTubeApi.getVideoUrl();
 						}
-					};
 
-					youtube[`set${capName}`] = value => {
-						//console.log('[' + options.prefix + ' set]: ' + propName + ' = ' + value, t.flashApi);
+						return value;
+					} else {
+						return null;
+					}
+				};
 
-						if (youTubeApi !== null) {
+				youtube[`set${capName}`] = value => {
+					//console.log('[' + options.prefix + ' set]: ' + propName + ' = ' + value, t.flashApi);
 
-							// do something
-							switch (propName) {
+					if (youTubeApi !== null) {
 
-								case 'src':
-									const url = typeof value === 'string' ? value : value[0].src;
-									const videoId = YouTubeApi.getYouTubeId(url);
+						// do something
+						switch (propName) {
 
-									if (mediaElement.getAttribute('autoplay')) {
-										youTubeApi.loadVideoById(videoId);
-									} else {
-										youTubeApi.cueVideoById(videoId);
-									}
-									break;
+							case 'src':
+								const url = typeof value === 'string' ? value : value[0].src, videoId = YouTubeApi.getYouTubeId(url);
 
-								case 'currentTime':
-									youTubeApi.seekTo(value);
-									break;
+								if (mediaElement.getAttribute('autoplay')) {
+									youTubeApi.loadVideoById(videoId);
+								} else {
+									youTubeApi.cueVideoById(videoId);
+								}
+								break;
 
-								case 'muted':
-									if (value) {
-										youTubeApi.mute(); // ?
-									} else {
-										youTubeApi.unMute(); // ?
-									}
-									setTimeout(() => {
+							case 'currentTime':
+								youTubeApi.seekTo(value);
+								break;
 
-										const event = mejs.Utils.createEvent('volumechange', youtube);
-										mediaElement.dispatchEvent(event);
-									}, 50);
-									break;
-
-								case 'volume':
-									youTubeApi.setVolume(value);
+							case 'muted':
+								if (value) {
+									youTubeApi.mute(); // ?
+								} else {
+									youTubeApi.unMute(); // ?
+								}
+								setTimeout(() => {
 									const event = mejs.Utils.createEvent('volumechange', youtube);
 									mediaElement.dispatchEvent(event);
-									break;
+								}, 50);
+								break;
 
-								default:
-									console.log(`youtube ${id}`, propName, 'UNSUPPORTED property');
-							}
+							case 'volume':
+								youTubeApi.setVolume(value);
+								setTimeout(() => {
+									const event = mejs.Utils.createEvent('volumechange', youtube);
+									mediaElement.dispatchEvent(event);
+								}, 50);
+								break;
 
-						} else {
-							// store for after "READY" event fires
-							apiStack.push({type: 'set', propName, value});
+							default:
+								console.log(`youtube ${id}`, propName, 'UNSUPPORTED property');
 						}
-					}
 
-				}))(props[i]);
+					} else {
+						// store for after "READY" event fires
+						apiStack.push({type: 'set', propName, value});
+					}
+				};
+
+			};
+
+			for (i = 0, il = props.length; i < il; i++) {
+				assignGettersSetters(props[i]);
 			}
 
 			// add wrappers for native methods
 			const methods = mejs.html5media.methods;
-			for (i = 0, il = methods.length; i < il; i++) {
-				((methodName => {
 
-					// run the method on the native HTMLMediaElement
-					youtube[methodName] = () => {
-						console.log(`[${options.prefix} ${methodName}()]`);
+			const assignMethods = methodName => {
 
-						if (youTubeApi !== null) {
+				// run the method on the native HTMLMediaElement
+				youtube[methodName] = () => {
+					console.log(`[${options.prefix} ${methodName}()]`);
 
-							// DO method
-							switch (methodName) {
-								case 'play':
-									return youTubeApi.playVideo();
-								case 'pause':
-									return youTubeApi.pauseVideo();
-								case 'load':
-									return null;
+					if (youTubeApi !== null) {
 
-							}
+						// DO method
+						switch (methodName) {
+							case 'play':
+								return youTubeApi.playVideo();
+							case 'pause':
+								return youTubeApi.pauseVideo();
+							case 'load':
+								return null;
 
-						} else {
-							apiStack.push({type: 'call', methodName});
 						}
-					};
 
-				}))(methods[i]);
+					} else {
+						apiStack.push({type: 'call', methodName});
+					}
+				};
+
+			};
+
+			for (i = 0, il = methods.length; i < il; i++) {
+				assignMethods(methods[i]);
 			}
 
 			// CREATE YouTube
@@ -387,7 +390,7 @@
 					html5: 1,
 					playsinline: 1
 				},
-				origin: location.host,
+				origin: win.location.host,
 				events: {
 					onReady(e) {
 
@@ -419,18 +422,19 @@
 
 						console.log('iframe', youTubeIframe);
 
-						const events = ['mouseover', 'mouseout'];
-
-						for (const j in events) {
-							const eventName = events[j];
-							mejs.addEvent(youTubeIframe, eventName, e => {
+						const events = ['mouseover', 'mouseout'],
+							assignEvents = e => {
 
 								console.log('youtube iframe', e.type);
 
 								const event = mejs.Utils.createEvent(e.type, youtube);
 
 								mediaElement.dispatchEvent(event);
-							});
+							};
+
+						for (const j in events) {
+							const eventName = events[j];
+							mejs.addEvent(youTubeIframe, eventName, assignEvents);
 						}
 
 						// send init events
@@ -507,7 +511,7 @@
 
 			youtube.onEvent = (eventName, player, _youTubeState) => {
 				console.log('yt event', eventName);
-				if (_youTubeState != null) {
+				if (_youTubeState !== null && _youTubeState !== undefined) {
 					mediaElement.youTubeState = youTubeState = _youTubeState;
 				}
 

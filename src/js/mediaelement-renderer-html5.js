@@ -58,41 +58,45 @@
 
 			let i;
 			let il;
+
+			const assignGettersSetters = propName => {
+				const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
+
+				node[`get${capName}`] = () => node[propName];
+
+				node[`set${capName}`] = value => {
+					node[propName] = value;
+				};
+
+			};
+
 			for (i = 0, il = props.length; i < il; i++) {
-
-				// wrap in function to retain scope
-				((propName => {
-					const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
-
-					node[`get${capName}`] = () => node[propName];
-
-					node[`set${capName}`] = value => {
-						node[propName] = value;
-					};
-
-				}))(props[i]);
+				assignGettersSetters(props[i]);
 			}
 
 			let events = mejs.html5media.events;
+
+			const assignEvents = eventName => {
+
+				node.addEventListener(eventName, e => {
+					// copy event
+
+					const event = doc.createEvent('HTMLEvents');
+					event.initEvent(e.type, e.bubbles, e.cancelable);
+					event.srcElement = e.srcElement;
+					event.target = e.srcElement;
+
+					//var ev = mejs.Utils.extend({}, e);
+
+					mediaElement.dispatchEvent(event);
+				});
+
+			};
+
 			events = events.concat(['click', 'mouseover', 'mouseout']);
 
 			for (i = 0, il = events.length; i < il; i++) {
-				((eventName => {
-
-					node.addEventListener(eventName, e => {
-						// copy event
-
-						const event = doc.createEvent('HTMLEvents');
-						event.initEvent(e.type, e.bubbles, e.cancelable);
-						event.srcElement = e.srcElement;
-						event.target = e.srcElement;
-
-						//var ev = mejs.Utils.extend({}, e);
-
-						mediaElement.dispatchEvent(event);
-					});
-
-				}))(events[i]);
+				assignEvents(events[i]);
 			}
 
 			// HELPER METHODS

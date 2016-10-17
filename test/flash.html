@@ -2,7 +2,7 @@
 <html debug="true">
 <head>
     <title>MediaElement.js 3.0 - audio/video unification library</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
     <!--[if lte IE 8]>
     <script src="../src/js/console.js"></script>
@@ -26,34 +26,42 @@
 
 
     <!-- Optional: Player -->
-    <link href="../src/css/mediaelementplayer-simple.css" rel="stylesheet" />
+    <link href="../src/css/mediaelementplayer-simple.css" rel="stylesheet">
     <script src="../src/js/mediaelementplayer-simple.js"></script>
 
 </head>
 <body>
 
-<div id="container">
+    <div id="container">
 
-    <h1>MediaElement.js</h1>
+        <h1>MediaElement.js</h1>
 
-    <h2>RTMP Streaming</h2>
+        <h2>MP4/WebM using Flash</h2>
 
-    <video  width="640" height="360" preload="none" class="mejs-player" >
-        <source src="rtmp://firehose.cul.columbia.edu:1935/vod/mp4:sample.mp4" type="rtmp/mp4" />
-    </video>
+        <video  width="640" height="360" preload="none" class="mejs-player" >
+            <source src="http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4" type="video/mp4">
+        </video>
 
-</div>
+        <h2>RTMP Streaming</h2>
 
-<script>
+        <video  width="640" height="360" preload="none" class="mejs-player" >
+            <source src="rtmp://firehose.cul.columbia.edu:1935/vod/mp4:sample.mp4" type="rtmp/mp4">
+        </video>
 
-    var elements = mejs.getElementsByClassName('mejs-player');
+    </div>
 
-    for (var i=0, il=elements.length; i<il; i++) {
-        var player = new MediaElementPlayerSimple(elements[i], {
-            pluginPath: '../build/'
-        });
-    }
-</script>
+    <script>
+
+        mejs.Renderers.order = ['flash_video'];
+
+        var elements = mejs.getElementsByClassName('mejs-player');
+
+        for (var i=0, il=elements.length; i<il; i++) {
+            var player = new MediaElementPlayerSimple(elements[i], {
+                pluginPath: '../build/'
+            });
+        }
+    </script>
 
 </body>
 </html>

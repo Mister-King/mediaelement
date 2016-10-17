@@ -150,58 +150,69 @@
 			});
 
 			t.slider.bind('keydown', e => {
+
 				if ((new Date() - lastKeyPressTime) >= 1000) {
 					startedPaused = media.paused;
 				}
 
-				const keyCode = e.keyCode;
-				const duration = media.duration;
-				let seekTime = media.currentTime;
-				const seekForward = player.options.defaultSeekForwardInterval(media);
-				const seekBackward = player.options.defaultSeekBackwardInterval(media);
+				if (t.options.keyActions.length) {
+					const keyCode = e.keyCode;
+					const duration = media.duration;
+					let seekTime = media.currentTime;
+					const seekForward = player.options.defaultSeekForwardInterval(media);
+					const seekBackward = player.options.defaultSeekBackwardInterval(media);
 
-				switch (keyCode) {
-					case 37: // left
-					case 40: // Down
-						seekTime -= seekBackward;
-						break;
-					case 39: // Right
-					case 38: // Up
-						seekTime += seekForward;
-						break;
-					case 36: // Home
-						seekTime = 0;
-						break;
-					case 35: // end
-						seekTime = duration;
-						break;
-					case 32: // space
-						if (!mejs.Utility.isFirefox) {
-							media.paused ? media.play() : media.pause();
-						}
-						return;
-					case 13: // enter
-						media.paused ? media.play() : media.pause();
-						return;
-					default:
-						return;
+					switch (keyCode) {
+						case 37: // left
+						case 40: // Down
+							seekTime -= seekBackward;
+							break;
+						case 39: // Right
+						case 38: // Up
+							seekTime += seekForward;
+							break;
+						case 36: // Home
+							seekTime = 0;
+							break;
+						case 35: // end
+							seekTime = duration;
+							break;
+						case 32: // space
+							if (!mejs.Utility.isFirefox) {
+								if (media.paused) {
+									media.play();
+								} else {
+									media.pause();
+								}
+							}
+							return;
+						case 13: // enter
+							if (media.paused) {
+								media.play();
+							} else {
+								media.pause();
+							}
+							return;
+						default:
+							return;
+					}
+
+
+					seekTime = seekTime < 0 ? 0 : (seekTime >= duration ? duration : Math.floor(seekTime));
+					lastKeyPressTime = new Date();
+					if (!startedPaused) {
+						media.pause();
+					}
+
+					if (seekTime < media.duration && !startedPaused) {
+						setTimeout(restartPlayer, 1100);
+					}
+
+					media.setCurrentTime(seekTime);
+
+					e.preventDefault();
+					e.stopPropagation();
 				}
-
-				seekTime = seekTime < 0 ? 0 : (seekTime >= duration ? duration : Math.floor(seekTime));
-				lastKeyPressTime = new Date();
-				if (!startedPaused) {
-					media.pause();
-				}
-
-				if (seekTime < media.duration && !startedPaused) {
-					setTimeout(restartPlayer, 1100);
-				}
-
-				media.setCurrentTime(seekTime);
-
-				e.preventDefault();
-				e.stopPropagation();
-				return false;
 			});
 
 
@@ -217,7 +228,7 @@
 					});
 					t.globalBind('mouseup.dur touchend.dur', e => {
 						mouseIsDown = false;
-						if (typeof t.timefloat !== 'undefined') {
+						if (t.timefloat !== undefined) {
 							t.timefloat.hide();
 						}
 						t.globalUnbind('.dur');
@@ -229,7 +240,7 @@
 				t.globalBind('mousemove.dur', e => {
 					handleMouseMove(e);
 				});
-				if (typeof t.timefloat !== 'undefined' && !mejs.MediaFeatures.hasTouch) {
+				if (t.timefloat !== undefined && !mejs.MediaFeatures.hasTouch) {
 					t.timefloat.show();
 				}
 			})
@@ -237,7 +248,7 @@
 				mouseIsOver = false;
 				if (!mouseIsDown) {
 					t.globalUnbind('.dur');
-					if (typeof t.timefloat !== 'undefined') {
+					if (t.timefloat !== undefined) {
 						t.timefloat.hide();
 					}
 				}
@@ -320,5 +331,4 @@
 
 		}
 	});
-
 }))(mejs.$);

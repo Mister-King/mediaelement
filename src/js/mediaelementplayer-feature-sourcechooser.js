@@ -138,7 +138,7 @@
 
 			for (const i in sources) {
 				const src = sources[i];
-				if (typeof src.type !== 'undefined' && src.nodeName === 'SOURCE' && media.canPlayType !== null) {
+				if (src.type !== undefined && src.nodeName === 'SOURCE' && media.canPlayType !== null) {
 					player.addSourceButton(src.src, src.title, src.type, media.src === src.src);
 				}
 			}
@@ -153,7 +153,7 @@
 		 */
 		addSourceButton(src, label, type, isCurrent) {
 			const t = this;
-			if (label === '' || label == undefined) {
+			if (label === '' || label === undefined) {
 				label = src;
 			}
 			type = type.split('/')[1];
@@ -184,7 +184,7 @@
 
 			const t = this;
 
-			if (typeof t.sourcechooserButton === 'undefined' || !t.sourcechooserButton.find('.mejs-sourcechooser-selector').find('input[type=radio]').length) {
+			if (t.sourcechooserButton === undefined || !t.sourcechooserButton.find('.mejs-sourcechooser-selector').find('input[type=radio]').length) {
 				return;
 			}
 
@@ -203,7 +203,7 @@
 
 			const t = this;
 
-			if (typeof t.sourcechooserButton === 'undefined' || !t.sourcechooserButton.find('.mejs-sourcechooser-selector').find('input[type=radio]').length) {
+			if (t.sourcechooserButton === undefined || !t.sourcechooserButton.find('.mejs-sourcechooser-selector').find('input[type=radio]').length) {
 				return;
 			}
 

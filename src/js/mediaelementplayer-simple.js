@@ -25,14 +25,14 @@
 		}
 	}
 
-	function getElementsByClassName(class_name, node, tag) {
-		if (node == null) {
+	function getElementsByClassName(className, node, tag) {
+		if (node === undefined || node === null) {
 			node = document;
 		}
-		if (node.getElementsByClassName != null) {
-			return node.getElementsByClassName(class_name);
+		if (node.getElementsByClassName !== undefined && node.getElementsByClassName !== null) {
+			return node.getElementsByClassName(className);
 		}
-		if (tag == null) {
+		if (tag === undefined || tag === null) {
 			tag = '*';
 		}
 
@@ -80,7 +80,7 @@
 			do {
 				curleft += obj.offsetLeft;
 				curtop += obj.offsetTop;
-			} while (obj = obj.offsetParent);
+			} while ((obj = obj.offsetParent));
 
 			return {x: curleft, y: curtop};
 		}
@@ -107,14 +107,14 @@
 			this.flag = flag || -1;
 			this.alpha = this.elem.style.opacity ? parseFloat(this.elem.style.opacity) * 100 : 0;
 			this.elem.si = setInterval(() => {
-				fadeEffect.tween()
+				fadeEffect.tween();
 			}, 5);
 		},
 		tween() {
 			if (this.alpha == this.target) {
 				clearInterval(this.elem.si);
 			} else {
-				const value = Math.round(this.alpha + ((this.target - this.alpha) * .05)) + (1 * this.flag);
+				const value = Math.round(this.alpha + ((this.target - this.alpha) * 0.05)) + (1 * this.flag);
 				this.elem.style.opacity = value / 100;
 				this.elem.style.filter = `alpha(opacity=${value})`;
 				this.alpha = value;
@@ -137,7 +137,7 @@
 		constructor(idOrObj, options) {
 			const original = typeof(idOrObj) === 'string' ? doc.getElementById(idOrObj) : idOrObj;
 			const id = original && original.id ? original.id : `mejs_${mejs.id++}`;
-			const autoplay = original && typeof original.autoplay !== 'undefined' && original.autoplay === true;
+			const autoplay = original && original.autoplay !== undefined && original.autoplay === true;
 			const tagName = original.tagName.toLowerCase();
 			const isVideo = (tagName === 'video' || tagName === 'iframe');
 			const container = doc.createElement('div');
@@ -153,7 +153,6 @@
 
 			let mediaElement = null;
 			const t = this;
-			//const MediaElement = require('./mediaelement-core.js');
 
 			t.id = id;
 			t.options = options;
@@ -172,7 +171,7 @@
 			controls.style.opacity = 1.0;
 			container.appendChild(original);
 
-			mediaElement = mejs.MediaElement(original, t.options);
+			mediaElement = new mejs.MediaElement(original, t.options);
 			t.mediaElement = mediaElement;
 
 			mediaElement.addEventListener('click', () => {
@@ -273,7 +272,7 @@
 			}
 
 			function clearControlsTimeout() {
-				if (controlsTimeout != null) {
+				if (controlsTimeout !== null) {
 					clearTimeout(controlsTimeout);
 					controlsTimeout = null;
 				}
@@ -290,7 +289,7 @@
 			}
 
 			addEvent(win, 'resize', () => {
-				t.resizeControls()
+				t.resizeControls();
 			});
 		}
 
@@ -534,8 +533,6 @@
 
 					if (container.requestFullscreen) {
 						container.requestFullscreen();
-					} else if (container.requestFullScreen) {
-						container.requestFullScreen();
 					} else if (container.webkitRequestFullScreen) {
 						container.webkitRequestFullScreen();
 					} else if (container.mozRequestFullScreen) {

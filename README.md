@@ -33,24 +33,29 @@ Instead of using Flash as a _fallback_, Flash is used to make the browser seem H
 <a id="migration"></a>
 ## * What's New on `MediaElement.js` version 3.0
 
-* Introduction of `Renderers`, plugable code snippets that allow the introduction of new media formats in an easier way.
+* Introduction of `Renderers`, pluggable code that allows the introduction of new media formats in an easier way.
 
-* Ability to play Facebook, SoundCloud, M(PEG)-DASH using [dash.js](https://github.com/Dash-Industry-Forum/dash.js) for native support.
+* Ability to play Facebook, SoundCloud, M(PEG)-DASH using [dash.js](https://github.com/Dash-Industry-Forum/dash.js) for native support and [dash.as](https://github.com/castlabs/dashas) for Flash fallback.
 
 * Code completely documented using [JSDoc](http://usejsdoc.org/) notation.
 
 * Addition of native HLS using [hls.js](https://github.com/dailymotion/hls.js) library.
 
-<!--* Integrated use of [JSMad](https://github.com/fasterthanlime/jsmad) (if indicated) to decode `mp3` audio.-->
-
 * Updated player for Vimeo by removing the use of `Froogaloop` and integrating the new [Player API](https://github.com/vimeo/player.js).
 
-<!--* Addition of error propagation from Flash to Javascript.-->
+* Deprecated use of `pluginType` element.
+ 
+* Removed support for Silverlight shim.
 
-* Deprecated use of `pluginType` element
+* Integration of [JSLint](https://github.com/douglascrockford/JSLint) to ensure code quality and better error checking for development.
+
+For more information, please consult [Change Log](changelog.md)
+
 
 <a id="browser-support"></a>
 ## Browser and Device support
+
+In general, `MediaElement` supports IE9+, MS Edge, Chrome, Firefox, Safari, iOS 8+ and Android 4.0+
 
 Format | MIME Type | Support
 ------ | --------- | -------

@@ -65,7 +65,7 @@
 
 				// Attach handlers for all browsers
 				script.onload = script.onreadystatechange = function () {
-					if (!done && (!this.readyState || typeof this.readyState === 'undefined' ||
+					if (!done && (!this.readyState || this.readyState === undefined ||
 						this.readyState === 'loaded' || this.readyState === 'complete')) {
 						done = true;
 						NativeHls.mediaReady();
@@ -164,7 +164,8 @@
 		 */
 		canPlayType(type) {
 
-			const mediaTypes = ['application/x-mpegURL', 'vnd.apple.mpegURL', 'audio/mpegURL', 'audio/hls', 'video/hls'];
+			const mediaTypes = ['application/x-mpegURL', 'application/x-mpegurl', 'vnd.apple.mpegURL',
+				'audio/mpegURL', 'audio/hls', 'video/hls'];
 			return mejs.MediaFeatures.hasMse && mediaTypes.includes(type);
 		},
 		/**
@@ -189,40 +190,41 @@
 
 			// WRAPPERS for PROPs
 			const props = mejs.html5media.properties;
+
+			const assignGettersSetters = propName => {
+				const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
+
+				node[`get${capName}`] = () => {
+					if (hlsPlayer !== null) {
+						return node[propName];
+					} else {
+						return null;
+					}
+				};
+
+				node[`set${capName}`] = value => {
+					if (hlsPlayer !== null) {
+						node[propName] = value;
+
+						if (propName === 'src') {
+
+							hlsPlayer.detachMedia();
+							hlsPlayer.attachMedia(node);
+
+							hlsPlayer.on(Hls.Events.MEDIA_ATTACHED, () => {
+								hlsPlayer.loadSource(value);
+							});
+						}
+					} else {
+						// store for after "READY" event fires
+						stack.push({type: 'set', propName, value});
+					}
+				};
+
+			};
+
 			for (i = 0, il = props.length; i < il; i++) {
-
-				// wrap in function to retain scope
-				((propName => {
-					const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
-
-					node[`get${capName}`] = () => {
-						if (hlsPlayer !== null) {
-							return node[propName];
-						} else {
-							return null;
-						}
-					};
-
-					node[`set${capName}`] = value => {
-						if (hlsPlayer !== null) {
-							node[propName] = value;
-
-							if (propName === 'src') {
-
-								hlsPlayer.detachMedia();
-								hlsPlayer.attachMedia(node);
-
-								hlsPlayer.on(Hls.Events.MEDIA_ATTACHED, () => {
-									hlsPlayer.loadSource(value);
-								});
-							}
-						} else {
-							// store for after "READY" event fires
-							stack.push({type: 'set', propName, value});
-						}
-					};
-
-				}))(props[i]);
+				assignGettersSetters(props[i]);
 			}
 
 			// Initial method to register all HLS events
@@ -251,34 +253,36 @@
 
 				const hlsEvents = Hls.Events;
 
+				const assignEvents = eventName => {
+
+					if (eventName === 'loadedmetadata') {
+
+						hlsPlayer.detachMedia();
+
+						const url = node.src;
+
+						hlsPlayer.attachMedia(node);
+						hlsPlayer.on(hlsEvents.MEDIA_ATTACHED, () => {
+							hlsPlayer.loadSource(url);
+						});
+					}
+
+					node.addEventListener(eventName, e => {
+						// copy event
+						const event = doc.createEvent('HTMLEvents');
+						event.initEvent(e.type, e.bubbles, e.cancelable);
+						event.srcElement = e.srcElement;
+						event.target = e.srcElement;
+
+						mediaElement.dispatchEvent(event);
+					});
+
+				};
+
 				events = events.concat(['click', 'mouseover', 'mouseout']);
 
 				for (i = 0, il = events.length; i < il; i++) {
-					((eventName => {
-
-						if (eventName === 'loadedmetadata') {
-
-							hlsPlayer.detachMedia();
-
-							const url = node.src;
-
-							hlsPlayer.attachMedia(node);
-							hlsPlayer.on(hlsEvents.MEDIA_ATTACHED, () => {
-								hlsPlayer.loadSource(url);
-							});
-						}
-
-						node.addEventListener(eventName, e => {
-							// copy event
-							const event = doc.createEvent('HTMLEvents');
-							event.initEvent(e.type, e.bubbles, e.cancelable);
-							event.srcElement = e.srcElement;
-							event.target = e.srcElement;
-
-							mediaElement.dispatchEvent(event);
-						});
-
-					}))(events[i]);
+					assignEvents(events[i]);
 				}
 
 				/**
@@ -291,23 +295,24 @@
 				 * @see https://github.com/dailymotion/hls.js/blob/master/API.md#runtime-events
 				 * @see https://github.com/dailymotion/hls.js/blob/master/API.md#errors
 				 */
+				const assignHlsEvents = (e, data) => {
+					const event = mejs.Utils.createEvent(e, node);
+					mediaElement.dispatchEvent(event);
+
+					if (e === 'ERROR') {
+
+						// Destroy instance of player if unknown error found
+						if (data.fatal && e === Hls.ErrorTypes.OTHER_ERROR) {
+							hlsPlayer.destroy();
+						}
+
+						console.error(e, data);
+					}
+				};
+
 				for (const eventType in hlsEvents) {
-
 					if (hlsEvents.hasOwnProperty(eventType)) {
-						hlsPlayer.on(hlsEvents[eventType], (e, data) => {
-							const event = mejs.Utils.createEvent(e, node);
-							mediaElement.dispatchEvent(event);
-
-							if (e === 'ERROR') {
-
-								// Destroy instance of player if unknown error found
-								if (data.fatal && e === Hls.ErrorTypes.OTHER_ERROR) {
-									hlsPlayer.destroy();
-								}
-
-								console.error(e, data);
-							}
-						});
+						hlsPlayer.on(hlsEvents[eventType], assignHlsEvents);
 					}
 				}
 			};

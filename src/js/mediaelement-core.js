@@ -11,13 +11,13 @@
 		 */
 		properties: [
 			// GET/SET
-			'volume', 'src', 'currentTime', 'muted'
+			'volume', 'src', 'currentTime', 'muted',
 
 			// GET only
-			, 'duration', 'paused', 'ended'
+			'duration', 'paused', 'ended',
 
 			// OTHERS
-			, 'error', 'currentSrc', 'networkState', 'preload', 'buffered', 'bufferedBytes', 'bufferedTime', 'readyState', 'seeking',
+			'error', 'currentSrc', 'networkState', 'preload', 'buffered', 'bufferedBytes', 'bufferedTime', 'readyState', 'seeking',
 			'initialTime', 'startOffsetTime', 'defaultPlaybackRate', 'playbackRate', 'played', 'seekable', 'autoplay', 'loop', 'controls'
 		],
 		/**
@@ -44,7 +44,7 @@
 	};
 
 
-	// List of possible renderers (HTML5, Flash, YouTube, Soundcloud, pure JS, etc.)
+// List of possible renderers (HTML5, Flash, YouTube, Soundcloud, pure JS, etc.)
 	mejs.Renderers = {
 
 		/**
@@ -72,23 +72,49 @@
 		/**
 		 * Loop through renderers available and determine the proper one to use
 		 *
-		 * The mechanism that will determine if the renderer is the correct one is the canPlay method
-		 * contained in the renderer.
+		 * The mechanism that will determine if the renderer is the correct one is the `canPlay` method
+		 * inside of each renderer file.
 		 * @param {Object[]} mediaFiles - A list of source and type obtained from video/audio/source tags: [{src:'',type:''}]
+		 * @param {?String[]} renderers - Optional list of pre-selected renderers
 		 * @return {?Object}
 		 */
-		selectRenderer(mediaFiles) {
+		selectRenderer(mediaFiles, renderers) {
 			const t = this;
+			let i;
+			let il;
+			let j;
+			let jl;
+			let rendererName;
+			let renderer;
 
-			for (let i = 0, il = t.order.length; i < il; i++) {
-				const rendererName = t.order[i];
-				const renderer = t.renderers[rendererName];
+			// First attempt: check if there are matches with specified ones
+			if (renderers !== undefined && renderers !== null) {
+				for (i = 0, il = renderers.length; i < il; i++) {
+					rendererName = renderers[i];
+					renderer = t.renderers[rendererName];
 
-				for (let j = 0, jl = mediaFiles.length; j < jl; j++) {
-					if (renderer.canPlayType(mediaFiles[j].type)) {
-						return {
-							rendererName,
-							src: mediaFiles[j].src
+					for (j = 0, jl = mediaFiles.length; j < jl; j++) {
+						if (renderer.canPlayType(mediaFiles[j].type)) {
+							return {
+								rendererName,
+								src: mediaFiles[j].src
+							};
+						}
+					}
+				}
+			}
+			// Second attempt: check matches with all available renderers specified via `mejs.Renderers.order`
+			else {
+				for (i = 0, il = t.order.length; i < il; i++) {
+					rendererName = t.order[i];
+					renderer = t.renderers[rendererName];
+
+					for (j = 0, jl = mediaFiles.length; j < jl; j++) {
+						if (renderer.canPlayType(mediaFiles[j].type)) {
+							return {
+								rendererName,
+								src: mediaFiles[j].src
+							};
 						}
 					}
 				}
@@ -98,7 +124,7 @@
 		}
 	};
 
-	// Basic defaults for MediaElement
+// Basic defaults for MediaElement
 	mejs.MediaElementOptionsDefaults = {
 		/**
 		 * List of the renderers to use
@@ -145,7 +171,7 @@
 
 		id = id || `mejs_${Math.random().toString().slice(2)}`;
 
-		if (mediaElement.originalNode !== null && mediaElement.appendChild) {
+		if (mediaElement.originalNode !== undefined && mediaElement.originalNode !== null && mediaElement.appendChild) {
 			// change id
 			mediaElement.originalNode.setAttribute('id', `${id}_from_mejs`);
 
@@ -169,50 +195,49 @@
 
 		let i;
 		let il;
+
+		const assignGettersSetters = propName => {
+			// src is a special one below
+			if (propName !== 'src') {
+				const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
+
+				const getFn = () => {
+					//console.log('[wrapper get]: ' + propName);
+
+					if (mediaElement.renderer !== undefined && mediaElement.renderer !== null) {
+						return mediaElement.renderer[`get${capName}`]();
+
+						//return mediaElement.renderer[propName];
+					} else {
+						return null;
+					}
+				};
+
+				const setFn = value => {
+					//console.log('[wrapper set]: ' + propName + ' = ' + value);
+
+					if (mediaElement.renderer !== undefined && mediaElement.renderer !== null) {
+						mediaElement.renderer[`set${capName}`](value);
+
+						//mediaElement.renderer[propName] = value;
+					}
+				};
+
+				mejs.Utils.addProperty(mediaElement, propName, getFn, setFn);
+
+				mediaElement[`get${capName}`] = getFn;
+				mediaElement[`set${capName}`] = setFn;
+			}
+		};
+
 		for (i = 0, il = props.length; i < il; i++) {
-
-			// wrap in function to retain scope
-			((propName => {
-
-				// src is a special one below
-				if (propName !== 'src') {
-					const capName = propName.substring(0, 1).toUpperCase() + propName.substring(1);
-
-					const getFn = () => {
-						//console.log('[wrapper get]: ' + propName);
-
-						if (mediaElement.renderer != null) {
-							return mediaElement.renderer[`get${capName}`]();
-
-							//return mediaElement.renderer[propName];
-						} else {
-							return null;
-						}
-					};
-
-					const setFn = value => {
-						//console.log('[wrapper set]: ' + propName + ' = ' + value);
-
-						if (mediaElement.renderer != null) {
-							mediaElement.renderer[`set${capName}`](value);
-
-							//mediaElement.renderer[propName] = value;
-						}
-					};
-
-					mejs.Utils.addProperty(mediaElement, propName, getFn, setFn);
-
-					mediaElement[`get${capName}`] = getFn;
-					mediaElement[`set${capName}`] = setFn;
-				}
-
-			}))(props[i]);
+			assignGettersSetters(props[i]);
 		}
 
 		// special .src property
 		const getSrc = () => {
 
-			if (mediaElement.renderer != null) {
+			if (mediaElement.renderer !== undefined && mediaElement.renderer !== null) {
 				return mediaElement.renderer.getSrc();
 			} else {
 				return null;
@@ -236,7 +261,7 @@
 
 					mediaFiles.push({
 						src,
-						type: (type === '' || type == null || typeof type === 'undefined') ? mejs.Utils.getTypeFromFile(src) : type
+						type: (type === '' || type === null || type === undefined) ? mejs.Utils.getTypeFromFile(src) : type
 					});
 
 				}
@@ -245,7 +270,8 @@
 			//console.log('SRC test', mediaFiles);
 
 			// find a renderer and URL match
-			renderInfo = mejs.Renderers.selectRenderer(mediaFiles);
+			renderInfo = mejs.Renderers.selectRenderer(mediaFiles,
+				(options.renderers.length ? options.renderers : null));
 
 			//console.log('SRC selection', renderInfo);
 			let event;
@@ -262,7 +288,7 @@
 			// turn on the renderer (this checks for the existing renderer already)
 			mediaElement.changeRenderer(renderInfo.rendererName, mediaFiles);
 
-			if (mediaElement.renderer === null) {
+			if (mediaElement.renderer === undefined || mediaElement.renderer === null) {
 				event = doc.createEvent("HTMLEvents");
 				event.initEvent('error', false, false);
 				event.message = 'Error creating renderer';
@@ -271,27 +297,27 @@
 		};
 
 		mejs.Utils.addProperty(mediaElement, 'src', getSrc, setSrc);
-		mediaElement['getSrc'] = getSrc;
-		mediaElement['setSrc'] = setSrc;
+		mediaElement.getSrc = getSrc;
+		mediaElement.setSrc = setSrc;
 
 		// add methods
 		const methods = mejs.html5media.methods;
+
+		const assignMethods = methodName => {
+			// run the method on the current renderer
+			mediaElement[methodName] = function () {
+				console.log(`[wrapper ${mediaElement.id}.${methodName}()]`, mediaElement.renderer);
+				if (mediaElement.renderer !== undefined && mediaElement.renderer !== null) {
+					return mediaElement.renderer[methodName](arguments);
+				} else {
+					return null;
+				}
+			};
+
+		};
+
 		for (i = 0, il = methods.length; i < il; i++) {
-
-			// wrap in function to retain scope
-			((methodName => {
-
-				// run the method on the current renderer
-				mediaElement[methodName] = function () {
-					console.log(`[wrapper ${mediaElement.id}.${methodName}()]`, mediaElement.renderer);
-					if (mediaElement.renderer != null) {
-						return mediaElement.renderer[methodName](arguments);
-					} else {
-						return null;
-					}
-				};
-
-			}))(methods[i]);
+			assignMethods(methods[i]);
 		}
 
 		// IE && iOS
@@ -369,7 +395,7 @@
 		 */
 		mediaElement.changeRenderer = (rendererName, mediaFiles) => {
 			// check for a match on the current renderer
-			if (mediaElement.renderer !== null && mediaElement.renderer.name === rendererName) {
+			if (mediaElement.renderer !== undefined && mediaElement.renderer !== null && mediaElement.renderer.name === rendererName) {
 
 				console.log(`Already using: ${rendererName}`);
 
@@ -380,7 +406,7 @@
 			}
 
 			// if existing renderer is not the right one, then hide it
-			if (mediaElement.renderer !== null) {
+			if (mediaElement.renderer !== undefined && mediaElement.renderer !== null) {
 
 				console.log('Stopping and hiding: ', mediaElement.renderer);
 
@@ -396,10 +422,11 @@
 
 			let newRendererType = null;
 
-			if (newRenderer != null) {
+			if (newRenderer !== undefined && newRenderer !== null) {
 				console.log('restoring: ', newRenderer.name);
 
 				newRenderer.show();
+
 				newRenderer.setSrc(mediaFiles[0].src);
 
 				mediaElement.renderer = newRenderer;
@@ -414,9 +441,10 @@
 				if (rendererArray[index] === rendererName) {
 
 					// create the renderer
-					newRendererType = mejs.Renderers.renderers[mejs.Renderers.order[index]];
+					newRendererType = mejs.Renderers.renderers[rendererArray[index]];
+
 					const renderOptions = mejs.Utils.extend({}, mediaElement.options, newRendererType.options);
-					newRenderer = newRendererType.create(mediaElement, renderOptions, mediaFiles);
+					newRenderer = new newRendererType.create(mediaElement, renderOptions, mediaFiles);
 					newRenderer.name = rendererName;
 
 					//console.log('Switching to: ', newRendererType);
@@ -444,7 +472,7 @@
 		 * @param {number} height
 		 */
 		mediaElement.setSize = (width, height) => {
-			if (mediaElement.renderer !== null) {
+			if (mediaElement.renderer !== undefined && mediaElement.renderer !== null) {
 				mediaElement.renderer.setSize(width, height);
 			}
 		};

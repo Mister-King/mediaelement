@@ -420,7 +420,7 @@
 		 *
 		 */
 		displayCaptions() {
-			if (typeof this.tracks === 'undefined')
+			if (this.tracks === undefined)
 				return;
 
 			const t = this;
@@ -460,7 +460,7 @@
 		 * @param {Number} index
 		 */
 		showSlide(index) {
-			if (typeof this.tracks === 'undefined' || typeof this.slidesContainer === 'undefined') {
+			if (this.tracks === undefined || this.slidesContainer === undefined) {
 				return;
 			}
 
@@ -468,7 +468,7 @@
 			const url = t.slides.entries.text[index];
 			let img = t.slides.entries.imgs[index];
 
-			if (typeof img === 'undefined' || typeof img.fadeIn === 'undefined') {
+			if (img === undefined || img.fadeIn === undefined) {
 
 				t.slides.entries.imgs[index] = img = $(`<img src="${url}">`)
 				.on('load', () => {
@@ -497,7 +497,7 @@
 		 *
 		 */
 		displaySlides() {
-			if (typeof this.slides === 'undefined') {
+			if (this.slides === undefined) {
 				return;
 			}
 

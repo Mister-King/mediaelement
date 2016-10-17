@@ -1,5 +1,6 @@
 module.exports = function(grunt) {
 
+	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-copy');
@@ -21,10 +22,13 @@ module.exports = function(grunt) {
 			if (grunt.file.isFile(path)) {
 				featureSources.push(path);
 			}
-		})
+		});
 	}
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
+		jshint: {
+			all: ['Gruntfile.js', 'src/js/**/*.js']
+		},
 		concat: {
 			me: {
 				src: [
@@ -60,9 +64,11 @@ module.exports = function(grunt) {
 					'src/js/mediaelementplayer-feature-fullscreen.js',
 					'src/js/mediaelementplayer-feature-speed.js',
 					'src/js/mediaelementplayer-feature-tracks.js',
+					'src/js/mediaelementplayer-feature-loop.js',
 					'src/js/mediaelementplayer-feature-sourcechooser.js',
 					'src/js/mediaelementplayer-feature-contextmenu.js',
 					'src/js/mediaelementplayer-feature-skipback.js',
+					'src/js/mediaelementplayer-feature-jumpforward.js',
 					'src/js/mediaelementplayer-feature-postroll.js',
 					'src/js/mediaelementplayer-feature-markers.js'
 					]),
@@ -119,7 +125,7 @@ module.exports = function(grunt) {
 			build: {
 				expand  : true,
 				cwd     : 'src/css/',
-				src     : ['*.png', '*.svg', '*.gif', '*.css'],
+				src     : ['*.png', '*.svg', '*.gif', '*.css', '!*-simple*'],
 				dest    : 'build/',
 				flatten : true,
 				filter  : 'isFile'
@@ -130,10 +136,7 @@ module.exports = function(grunt) {
 				src     : ['mediaelement-i18n-locale-*.js'],
 				dest    : 'build/lang/',
 				flatten : true,
-				filter  : 'isFile',
-				rename: function(dest, src) {
-					return dest + src.replace('mediaelement', 'me');
-				}
+				filter  : 'isFile'
 			}
 		},
         clean: {
@@ -207,10 +210,10 @@ module.exports = function(grunt) {
 		}
 	});
 
-	grunt.registerTask('default', ['concat', 'removelogging', 'uglify', 'cssmin', 'copy',
+	grunt.registerTask('default', ['jshint', 'concat', 'removelogging', 'uglify', 'cssmin', 'copy',
 		'shell:buildFlash', 'shell:buildFlashCDN', 'shell:buildFlashDebug', 'clean:temp']);
 
-    grunt.registerTask('html5only', ['concat', 'removelogging', 'uglify', 'cssmin', 'copy', 'clean:temp']);
-    grunt.registerTask('debug_html5', ['concat', 'uglify', 'cssmin', 'copy', 'clean:temp']);
+    grunt.registerTask('html5only', ['jshint', 'concat', 'removelogging', 'uglify', 'cssmin', 'copy', 'clean:temp']);
+    grunt.registerTask('debug_html5', ['jshint', 'concat', 'uglify', 'cssmin', 'copy', 'clean:temp']);
 
 };

@@ -1,6 +1,10 @@
 # Guidelines for Contributors
 
 * [Development](#development)
+    * [General Conventions](#development)
+    * [Features](#features)
+    * [Renderers](#renderers)
+    * [Translations](#translations)
 * [Node.js](#nodejs)
 * [Flex SDK](#flex)
 * [Building](#building)
@@ -15,6 +19,7 @@
 * Make sure you download the necessary media files from https://github.com/johndyer/mediaelement-files and place them inside the `/media/` directory.
 * Use [JSDoc](http://usejsdoc.org/) conventions to document code. This facilitates the contributions of other developers and ensures more quality in the product. 
 
+<a id="features"></a>
 ### Features
 
 The file name for them by default is: `mediaelementplayer-feature-[feature_name].js`. To keep consistency across the code, please follow the template above, including the long comments.
@@ -98,7 +103,8 @@ $(document).ready(function() {
 </script>
 ```
 
-### Renders
+<a id="renderers"></a>
+### Renderers
 
 The file name for them by default is: `mediaelement-renderer-[renderer_name].js`. To keep consistency across the code, please follow the template above, including the long comments.
 
@@ -129,17 +135,17 @@ The file name for them by default is: `mediaelement-renderer-[renderer_name].js`
     // It could be more code involved to load API properly, and even register a global event for the API.
     // Check `/src/js/mediaelement-renderer-*` files to see what approach fits the best on your development
     //
-    //win['[keyNameEvent]'] = function() {	
+    //win.[keyNameEvent] = function() {	
     //    // Your code to initiate renderer
     //};
     
     var [camelCaseRendererName] = {
         // A unique name for the renderer
-        name: 'dailymotion_iframe',
+        name: '[unique_renderer_name]',
         
         options: {
             // MUST match with renderer name
-            prefix: 'dailymotion_iframe'
+            prefix: '[unique_renderer_name]'
         },
         
         /**
@@ -180,12 +186,10 @@ The file name for them by default is: `mediaelement-renderer-[renderer_name].js`
             
             // More code prior binding native properties/methods/events
             
-            var props = mejs.html5media.properties;
-            for (i=0, il=props.length; i<il; i++) {
-            
-                // wrap in function to retain scope
-                (function(propName) {
-                
+            var 
+                props = mejs.html5media.properties,
+                assignGettersSetters = function(propName) {
+                                                       
                     // add to flash state that we will store
                     
                     var capName = propName.substring(0,1).toUpperCase() + propName.substring(1);
@@ -193,10 +197,9 @@ The file name for them by default is: `mediaelement-renderer-[renderer_name].js`
                     container['get' + capName] = function() {
                         if (customPlayer !== null) {
                             var value = null;
-                            
-                            // figure out how to get dm dta here
+
                             switch (propName) {
-                                // Add your code for each property (i.e., getSrc, getCurrentTime, etc.)
+                            // Add your code for each property (i.e., getSrc, getCurrentTime, etc.)
                             }
                         } else {
                             return null;
@@ -206,35 +209,41 @@ The file name for them by default is: `mediaelement-renderer-[renderer_name].js`
                         if (customPlayer !== null) {
                         
                             switch (propName) {
-                                // Add your code for each property (i.e., setSrc, setCurrentTime, etc.)
+                            // Add your code for each property (i.e., setSrc, setCurrentTime, etc.)
                             }
                         }  else {
                             // store for after "READY" event fires
                             apiStack.push({type: 'set', propName: propName, value: value});
                         }
                     };
-                
-                })(props[i]);
+                    
+                    }
+            ;
+            for (i=0, il=props.length; i<il; i++) {
+                assignGettersSetters(props[i]);
             }
             
-            var methods = mejs.html5media.methods;
-            for (i=0, il=methods.length; i<il; i++) {
-                (function(methodName) {
-                
+            var 
+                methods = mejs.html5media.methods,
+                assignMethods = function(methodName) {
+                                                
                     // run the method on the native HTMLMediaElement
                     container[methodName] = function() {
                     
                         if (customPlayer !== null) {
                         
                             switch (methodName) {
-                                // Add your code for each native method (i.e., play, pause, load, etc.)
+                            // Add your code for each native method (i.e., play, pause, load, etc.)
                             }
                         } else {
                             apiStack.push({type: 'call', methodName: methodName});
                         }
                     };
                 
-                })(methods[i]);
+                }
+            ;
+            for (i=0, il=methods.length; i<il; i++) {
+                assignMethods(methods[i]);
             }
             
             // Tends to be the norm to use a global event to register all the native events, plus the custom 
@@ -260,36 +269,39 @@ The file name for them by default is: `mediaelement-renderer-[renderer_name].js`
                     }
                 }
                 
-                containerDOM = doc.getElementById(dm.id);
+                containerDOM = doc.getElementById(container.id);
                 
                 // Make sure to include Mouse events
                 events = ['mouseover','mouseout'];
+                var assignEvent = function(e) {
+                    var event = mejs.Utils.createEvent(e.type, container);
+                    mediaElement.dispatchEvent(event);
+                });
+                
                 for (var j in events) {
                     var eventName = events[j];
-                    mejs.addEvent(dmIframe, eventName, function(e) {
-                        var event = mejs.Utils.createEvent(e.type, dm);
-                
-                        mediaElement.dispatchEvent(event);
-                    });
+                    mejs.addEvent(containerDOM, eventName, assignEvent);
                 }
                 
                 // BUBBLE EVENTS up
                 events = mejs.html5media.events;
                 events = events.concat(['click','mouseover','mouseout']);
                 
+                var assignNativeEvents = function(eventName) {
+                                                       
+                    // Any code related to trigger events
+                    // generally it follows the convention above:
+                    
+                    customPlayer.addEventListener(eventName, function (e) {
+                    // copy event
+                    var event = mejs.Utils.createEvent(e.type, customPlayer);
+                        mediaElement.dispatchEvent(event);
+                    });
+                
+                };
+                
                 for (i=0, il=events.length; i<il; i++) {
-                    (function(eventName) {
-                    
-                        // Any code related to trigger events
-                        // generally it follows the convention above:
-                        
-                        customPlayer.addEventListener(eventName, function (e) {
-                            // copy event
-                            var event = mejs.Utils.createEvent(e.type, dmPlayer);
-                            mediaElement.dispatchEvent(event);
-                        });
-                    
-                    })(events[i]);
+                    assignNativeEvents(events[i]);
                 }
 
                 // All custom events (if any)
@@ -307,17 +319,21 @@ The file name for them by default is: `mediaelement-renderer-[renderer_name].js`
             // Create new markup for renderer and hide original one
             ...
             
-            // Some methods must be created to override default behaviors, such as show()/hide(), etc.
-            
+            // The following methods MUST be created
+
             container.hide = function() {
                 // Add your code to hide media
             };
             container.show = function() {
                 // Add your code to show media
             };
-            
-            ...
-            
+            container.setSize = function() {
+                // Add your code to resize media
+            };
+            container.destroy = function () {
+                // Add your code to destroy media (if any; otherwise, leave empty)
+            };
+                        
             return container;
             
         }
@@ -331,15 +347,59 @@ The file name for them by default is: `mediaelement-renderer-[renderer_name].js`
 
 Another things to consider when developing a new renderer:
 
+* Update the list of [Renderers/IDs](usage.md#renderers-usage) documentation.
 * Add the HTML needed to display new media in `/test/simpleplayer.html`.
 * Create a `/test/[renderer_name].html` to show the renderer in an isolated way.
-* Add an entry or two in `/test/alpha.html` to confirm that media for new renderer can be changed easily. Example:
+* Add an entry or two in `/test/alpha.html` and `/test/alpha-2.html` to confirm that media for new renderer can be changed easily. Example:
 
 ```html
  <span class="command">
     document.getElementById('playerId').src = '/path/to/new_media.extension'; 
 </span>
  ```
+
+<a id="translations"></a>
+### Translations
+
+If it is a translation that wants to be added, a couple of considerations need to be considered:
+
+* The current format is `'mejs.[ID of element]' : 'translation'` (i.e., `'mejs.play': 'Play'`).
+* The first element in the object **MUST** be `mejs.plural-form: [Number]`, where `[Number]` is the Family Group Number the language belongs (see `/src/js/mediaelement-18n.js` to determine which number is the appropriate one).
+* If you require to use plurals, you must write the possible translations in the order specified in http://localization-guide.readthedocs.io/en/latest/l10n/pluralforms.html as an array, and the placeholder to replace the number would be `%1`. 
+* **Only one** plural can be in the strings.
+* A code template to build a translation is presented below.
+
+```javascript
+/*!
+ * [Locale] translation ([lang])
+ *
+ * @see me-i18n.js
+ */
+;(function(exports, undefined) {
+
+    "use strict";
+
+    if (typeof exports.[lang] === 'undefined') {
+        exports.[lang] = {
+        
+            // Find the family group number; see `/src/js/mediaelement-18n.js`
+            'mejs.plural-form': 14,
+            
+            // Regular translations; to get the entire list of elements, always refer to `me-i18n-locale-en.js`
+            ... 
+            
+            // Example for pluralization following the form `nplurals=3; plural=(n%10==1 ? 0 : n%10==2 ? 1 : 2);`
+            // meaning that if the modulo between number indicated and 10 is 1, then the first string will be used;
+            // if the modulo between number indicated and 10 is 2, it will use the second one; otherwise, it will 
+            // use the third case
+            'mejs.time-skip-back' : ["Назад на %1 секунд", "Назад на %1 секунди", "Назад на %1 секунда"],
+
+        };
+    }
+
+}(mejs.i18n.locale.strings));
+```
+
 
 <a id="nodejs"></a>
 ## Node.js

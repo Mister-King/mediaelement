@@ -28,7 +28,11 @@
 			let oldValue = obj[name];
 
 			const getFn = () => onGet.apply(obj, [oldValue]);
-			const setFn = newValue => oldValue = onSet.apply(obj, [newValue]);
+
+			const setFn = newValue => {
+				oldValue = onSet.apply(obj, [newValue]);
+				return oldValue;
+			};
 
 			// Modern browsers, IE9+ (IE8 only works on DOM objects, not normal JS objects)
 			if (Object.defineProperty) {
@@ -244,9 +248,9 @@
 		 */
 		secondsToTimeCode(time, forceHours, showFrameCount, fps) {
 			//add framecount
-			if (typeof showFrameCount === 'undefined') {
+			if (showFrameCount === undefined) {
 				showFrameCount = false;
-			} else if (typeof fps === 'undefined') {
+			} else if (fps === undefined) {
 				fps = 25;
 			}
 
@@ -256,8 +260,8 @@
 			const frames = Math.floor(((time % 1) * fps).toFixed(3));
 
 			const result =
-				`${( (forceHours || hours > 0) ? (hours < 10 ? '0' + hours : hours) + ':' : '')
-				+ (minutes < 10 ? '0' + minutes : minutes)}:${seconds < 10 ? '0' + seconds : seconds}${(showFrameCount) ? ':' + (frames < 10 ? '0' + frames : frames) : ''}`;
+				`${( (forceHours || hours > 0) ? (hours < 10 ? '0' + hours : hours) + ':' : '') +
+				(minutes < 10 ? '0' + minutes : minutes)}:${seconds < 10 ? '0' + seconds : seconds}${(showFrameCount) ? ':' + (frames < 10 ? '0' + frames : frames) : ''}`;
 
 			return result;
 		},
@@ -272,9 +276,9 @@
 		 * @return {number}
 		 */
 		timeCodeToSeconds(time, forceHours, showFrameCount, fps) {
-			if (typeof showFrameCount === 'undefined') {
+			if (showFrameCount === undefined) {
 				showFrameCount = false;
-			} else if (typeof fps === 'undefined') {
+			} else if (fps === undefined) {
 				fps = 25;
 			}
 
@@ -337,7 +341,8 @@
 
 			for (; i < length; i++) {
 				// Only deal with non-null/undefined values
-				if ((options = arguments[i]) != null) {
+				options = arguments[i];
+				if (options !== null && options !== undefined) {
 					// Extend the base object
 					for (name in options) {
 						src = target[name];
@@ -373,7 +378,7 @@
 				time = 0;
 			}
 
-			if (typeof fps === 'undefined') {
+			if (fps === undefined) {
 				fps = 25;
 			}
 
@@ -473,6 +478,19 @@
 				timeout = setTimeout(later, wait);
 				if (callNow) func.apply(context, args);
 			};
+		},
+		/**
+		 * Returns true if targetNode appears after sourceNode in the dom.
+		 * @param {HTMLElement} sourceNode - the source node for comparison
+		 * @param {HTMLElement} targetNode - the node to compare against sourceNode
+		 */
+		isNodeAfter(sourceNode, targetNode) {
+			return !!(
+				sourceNode &&
+				targetNode &&
+				typeof sourceNode.compareDocumentPosition === 'function' &&
+				sourceNode.compareDocumentPosition(targetNode) & Node.DOCUMENT_POSITION_PRECEDING
+			);
 		}
 	};
 
@@ -539,15 +557,15 @@
 		// Detect native JavaScript fullscreen (Safari/Firefox only, Chrome still fails)
 
 		// iOS
-		features.hasiOSFullScreen = (typeof video.webkitEnterFullscreen !== 'undefined');
+		features.hasiOSFullScreen = (video.webkitEnterFullscreen !== undefined);
 
 		// W3C
-		features.hasNativeFullscreen = (typeof video.requestFullscreen !== 'undefined');
+		features.hasNativeFullscreen = (video.requestFullscreen !== undefined);
 
 		// webkit/firefox/IE11+
-		features.hasWebkitNativeFullScreen = (typeof video.webkitRequestFullScreen !== 'undefined');
-		features.hasMozNativeFullScreen = (typeof video.mozRequestFullScreen !== 'undefined');
-		features.hasMsNativeFullScreen = (typeof video.msRequestFullscreen !== 'undefined');
+		features.hasWebkitNativeFullScreen = (video.webkitRequestFullScreen !== undefined);
+		features.hasMozNativeFullScreen = (video.mozRequestFullScreen !== undefined);
+		features.hasMsNativeFullScreen = (video.msRequestFullscreen !== undefined);
 
 		features.hasTrueNativeFullScreen =
 			(features.hasWebkitNativeFullScreen || features.hasMozNativeFullScreen || features.hasMsNativeFullScreen);
@@ -623,7 +641,7 @@
 		// Test if Media Source Extensions are supported by browser
 		features.hasMse = ('MediaSource' in win);
 
-		features.supportsMediaTag = (typeof video.canPlayType !== 'undefined' || features.hasMse);
+		features.supportsMediaTag = (video.canPlayType !== undefined || features.hasMse);
 
 		return features;
 	}))();

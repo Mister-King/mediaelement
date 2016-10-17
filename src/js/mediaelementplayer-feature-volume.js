@@ -73,7 +73,7 @@
 			 */
 			positionVolumeHandle = (volume, secondTry) => {
 
-				if (!volumeSlider.is(':visible') && typeof secondTry === 'undefined') {
+				if (!volumeSlider.is(':visible') && secondTry === undefined) {
 					volumeSlider.show();
 					positionVolumeHandle(volume, true);
 					volumeSlider.hide();
@@ -224,23 +224,26 @@
 				return false;
 			})
 			.bind('keydown', e => {
-				const keyCode = e.keyCode;
-				let volume = media.volume;
-				switch (keyCode) {
-					case 38: // Up
-						volume = Math.min(volume + 0.1, 1);
-						break;
-					case 40: // Down
-						volume = Math.max(0, volume - 0.1);
-						break;
-					default:
-						return true;
-				}
 
-				mouseIsDown = false;
-				positionVolumeHandle(volume);
-				media.setVolume(volume);
-				return false;
+				if (t.options.keyActions.length) {
+					const keyCode = e.keyCode;
+					let volume = media.volume;
+					switch (keyCode) {
+						case 38: // Up
+							volume = Math.min(volume + 0.1, 1);
+							break;
+						case 40: // Down
+							volume = Math.max(0, volume - 0.1);
+							break;
+						default:
+							return true;
+					}
+
+					mouseIsDown = false;
+					positionVolumeHandle(volume);
+					media.setVolume(volume);
+					return false;
+				}
 			});
 
 			// MUTE button
